@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>PagePixel — Result (mock)</title>
+<link rel="stylesheet" href="../../../styles/theme.css" />
+<link rel="stylesheet" href="../../../result/result.css" />
+<style>
+  html, body { width: 1280px; height: 800px; overflow: hidden; }
+</style>
+</head>
+<body>
+  <header class="pp-toolbar">
+    <div class="pp-toolbar__brand">
+      <img src="../../../icons/icon32.png" alt="" width="22" height="22" />
+      <span>PagePixel</span>
+    </div>
+
+    <div class="pp-toolbar__group">
+      <button id="editToggleBtn" class="pp-btn pp-btn--icon pp-btn--active" title="Edit &amp; annotate" aria-pressed="true">✎</button>
+      <div class="pp-zoom" role="group" aria-label="Zoom">
+        <button id="zoomOutBtn" class="pp-btn pp-btn--icon" title="Zoom out" aria-label="Zoom out">−</button>
+        <span id="zoomLabel" class="pp-zoom__label">100%</span>
+        <button id="zoomInBtn" class="pp-btn pp-btn--icon" title="Zoom in" aria-label="Zoom in">+</button>
+      </div>
+    </div>
+
+    <div class="pp-toolbar__group pp-toolbar__group--grow">
+      <select id="formatSelect" class="pp-select" title="Export format" aria-label="Export format">
+        <option value="png" selected>PNG</option>
+        <option value="jpeg">JPEG</option>
+        <option value="webp">WEBP</option>
+        <option value="pdf">PDF</option>
+      </select>
+      <button id="copyBtn" class="pp-btn" title="Copy image to clipboard">Copy</button>
+      <button id="downloadBtn" class="pp-btn pp-btn--primary" title="Download">Download</button>
+    </div>
+
+    <div class="pp-toolbar__group">
+      <button id="helpBtn" class="pp-btn pp-btn--icon" title="Help">?</button>
+      <button id="feedbackBtn" class="pp-btn pp-btn--icon" title="Send feedback">✉</button>
+      <div class="pp-rating" id="ratingWidget" title="Rate PagePixel on the Chrome Web Store" aria-label="Rate PagePixel">
+        <button type="button" data-star="1" aria-label="Rate 1 star">★</button>
+        <button type="button" data-star="2" aria-label="Rate 2 stars">★</button>
+        <button type="button" data-star="3" aria-label="Rate 3 stars">★</button>
+        <button type="button" data-star="4" aria-label="Rate 4 stars">★</button>
+        <button type="button" data-star="5" aria-label="Rate 5 stars">★</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="pp-annotate-bar" id="annotateBar" role="toolbar" aria-label="Annotation tools">
+    <div class="pp-tool-group" id="toolGroup">
+      <button class="pp-btn pp-btn--icon" data-tool="pen" title="Pen">✎</button>
+      <button class="pp-btn pp-btn--icon pp-btn--active" data-tool="rect" title="Rectangle">▭</button>
+      <button class="pp-btn pp-btn--icon" data-tool="circle" title="Circle">◯</button>
+      <button class="pp-btn pp-btn--icon" data-tool="line" title="Line">╱</button>
+      <button class="pp-btn pp-btn--icon" data-tool="arrow" title="Arrow">→</button>
+      <button class="pp-btn pp-btn--icon" data-tool="text" title="Text">T</button>
+      <button class="pp-btn pp-btn--icon" data-tool="blur" title="Blur region">◐</button>
+      <button class="pp-btn pp-btn--icon" data-tool="pixelate" title="Pixelate region">▦</button>
+      <button class="pp-btn pp-btn--icon" data-tool="crop" title="Crop">⤢</button>
+    </div>
+
+    <div class="pp-tool-group">
+      <label class="pp-inline-label" title="Color">
+        <input type="color" id="colorPicker" value="#ff7a45" />
+      </label>
+      <label class="pp-inline-label" title="Brush size">
+        <input type="range" id="brushSize" min="1" max="50" value="4" />
+        <span id="brushSizeLabel">4px</span>
+      </label>
+    </div>
+
+    <div class="pp-tool-group">
+      <button id="undoBtn" class="pp-btn pp-btn--icon" title="Undo (Ctrl+Z)">↺</button>
+      <button id="redoBtn" class="pp-btn pp-btn--icon" title="Redo (Ctrl+Shift+Z)">↻</button>
+    </div>
+
+    <div class="pp-tool-group pp-tool-group--end">
+      <button id="doneEditBtn" class="pp-btn pp-btn--primary">Done</button>
+    </div>
+  </div>
+
+  <main class="pp-canvas-area" id="canvasArea">
+    <div class="pp-canvas-wrap" id="canvasWrap">
+      <canvas id="mainCanvas" width="1400" height="900"></canvas>
+      <canvas id="overlayCanvas" width="1400" height="900"></canvas>
+    </div>
+  </main>
+
+  <footer class="pp-footer">
+    <span>Captured from: example.com/dashboard/reports</span>
+    <span class="pp-dot">·</span>
+    <span>Developed by AdxFuel</span>
+  </footer>
+
+<script>
+const c = document.getElementById('mainCanvas');
+const ctx = c.getContext('2d');
+
+// Synthetic "captured webpage" content
+ctx.fillStyle = '#ffffff';
+ctx.fillRect(0, 0, c.width, c.height);
+
+// fake browser page header
+const grad = ctx.createLinearGradient(0, 0, c.width, 0);
+grad.addColorStop(0, '#0b1f33');
+grad.addColorStop(1, '#1a7a8a');
+ctx.fillStyle = grad;
+ctx.fillRect(0, 0, c.width, 80);
+ctx.fillStyle = '#fff';
+ctx.font = 'bold 28px Segoe UI, sans-serif';
+ctx.fillText('Quarterly Revenue Dashboard', 40, 50);
+
+// fake nav
+ctx.fillStyle = '#f4f8f9';
+ctx.fillRect(0, 80, c.width, 56);
+ctx.fillStyle = '#4c5f6e';
+ctx.font = '16px Segoe UI, sans-serif';
+['Overview', 'Customers', 'Invoices', 'Settings'].forEach((label, i) => {
+  ctx.fillText(label, 40 + i * 140, 114);
+});
+
+// fake stat cards
+const cardY = 160, cardH = 140, cardW = 300, gap = 24;
+const stats = [
+  ['Total Revenue', '$482,930', '#1a7a8a'],
+  ['Active Users', '12,408', '#ff7a45'],
+  ['Churn Rate', '2.1%', '#d64545'],
+  ['Avg. Order', '$96.40', '#2e9e6b'],
+];
+stats.forEach((s, i) => {
+  const x = 40 + i * (cardW + gap);
+  ctx.fillStyle = '#f4f8f9';
+  ctx.fillRect(x, cardY, cardW, cardH);
+  ctx.strokeStyle = '#dbe6e9';
+  ctx.strokeRect(x, cardY, cardW, cardH);
+  ctx.fillStyle = '#4c5f6e';
+  ctx.font = '14px Segoe UI, sans-serif';
+  ctx.fillText(s[0], x + 20, cardY + 34);
+  ctx.fillStyle = s[2];
+  ctx.font = 'bold 30px Segoe UI, sans-serif';
+  ctx.fillText(s[1], x + 20, cardY + 84);
+});
+
+// fake chart area
+const chartY = cardY + cardH + 40;
+ctx.fillStyle = '#f4f8f9';
+ctx.fillRect(40, chartY, c.width - 80, 380);
+ctx.strokeStyle = '#dbe6e9';
+ctx.strokeRect(40, chartY, c.width - 80, 380);
+ctx.strokeStyle = '#1a7a8a';
+ctx.lineWidth = 3;
+ctx.beginPath();
+const pts = [40, 80, 60, 140, 110, 90, 150, 200, 260, 170, 220, 90, 260];
+pts.forEach((v, i) => {
+  const x = 80 + i * ((c.width - 200) / (pts.length - 1));
+  const y = chartY + 340 - v;
+  if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+});
+ctx.stroke();
+
+// fake table rows
+const tableY = chartY + 400;
+ctx.fillStyle = '#10202f';
+ctx.font = 'bold 18px Segoe UI, sans-serif';
+ctx.fillText('Recent Invoices', 40, tableY);
+for (let r = 0; r < 5; r++) {
+  const y = tableY + 30 + r * 34;
+  ctx.fillStyle = r % 2 === 0 ? '#f4f8f9' : '#ffffff';
+  ctx.fillRect(40, y, c.width - 80, 34);
+  ctx.fillStyle = '#4c5f6e';
+  ctx.font = '14px Segoe UI, sans-serif';
+  ctx.fillText(`INV-00${r + 1}`, 60, y + 22);
+  ctx.fillText('customer' + (r + 1) + '@example.com', 220, y + 22);
+  ctx.fillText('$' + (120 + r * 37) + '.00', c.width - 200, y + 22);
+}
+
+// ---- Now draw PagePixel-style annotations on TOP, as if user just added them ----
+ctx.lineWidth = 4;
+ctx.strokeStyle = '#ff7a45';
+
+// Rectangle highlighting a stat card
+ctx.strokeRect(40 - 6, cardY - 6, cardW + 12, cardH + 12);
+
+// Arrow pointing at the chart peak
+ctx.beginPath();
+ctx.moveTo(900, chartY - 40);
+ctx.lineTo(760, chartY + 100);
+ctx.stroke();
+ctx.beginPath();
+ctx.moveTo(760, chartY + 100);
+ctx.lineTo(778, chartY + 84);
+ctx.moveTo(760, chartY + 100);
+ctx.lineTo(784, chartY + 108);
+ctx.stroke();
+
+// Text annotation
+ctx.fillStyle = '#ff7a45';
+ctx.font = 'bold 22px Segoe UI, sans-serif';
+ctx.fillText('Best quarter yet!', 780, chartY - 50);
+
+// Blurred region over an email column (simulate blur with pixelation blocks)
+const bx = 220, by = tableY + 30, bw = 260, bh = 5 * 34;
+const blockSize = 10;
+for (let yy = by; yy < by + bh; yy += blockSize) {
+  for (let xx = bx; xx < bx + bw; xx += blockSize) {
+    const shade = 200 + Math.floor(Math.random() * 40);
+    ctx.fillStyle = `rgb(${shade - 40},${shade - 20},${shade})`;
+    ctx.fillRect(xx, yy, blockSize, blockSize);
+  }
+}
+
+// fit canvas to viewport like the real editor does
+const wrap = document.getElementById('canvasWrap');
+const scale = Math.min((1280 - 56) / c.width, (800 - 60 - 52) / c.height);
+c.style.width = (c.width * scale) + 'px';
+c.style.height = (c.height * scale) + 'px';
+document.getElementById('overlayCanvas').style.width = c.style.width;
+document.getElementById('overlayCanvas').style.height = c.style.height;
+document.getElementById('zoomLabel').textContent = Math.round(scale * 100) + '%';
+</script>
+</body>
+</html>

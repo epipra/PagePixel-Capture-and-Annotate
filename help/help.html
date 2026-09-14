@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>PagePixel — Help</title>
+<link rel="icon" href="../icons/icon32.png" />
+<link rel="stylesheet" href="../styles/theme.css" />
+<link rel="stylesheet" href="help.css" />
+</head>
+<body>
+  <header class="pp-help-header">
+    <img src="../assets/branding/wordmark_on_dark.png" alt="PagePixel — Capture &amp; Annotate" class="pp-help-wordmark" />
+    <p>Help &amp; documentation</p>
+  </header>
+
+  <main class="pp-help-main">
+    <details open>
+      <summary>1. Capture a Full-Page Screenshot</summary>
+      <div class="pp-help-body">
+        <p>Open the PagePixel popup on the page you want to capture, choose <strong>Full Page</strong>, and click <strong>Capture</strong>. PagePixel scrolls the page automatically, takes a screenshot at each step, and stitches every slice into one tall image.</p>
+        <ul>
+          <li><strong>Delay before capture (ms)</strong> — how long PagePixel waits after each scroll step before capturing. Increase this on pages with lazy-loaded images or animated content so it has time to render.</li>
+          <li><strong>Capture bottom to top</strong> — reverses the scroll direction. Useful on pages where scrolling downward triggers layout shifts, infinite-load jank, or a footer that breaks top-down stitching.</li>
+          <li>Sticky and fixed-position elements (like sticky headers/navbars) are automatically hidden during capture so they don't appear duplicated at every scroll step.</li>
+        </ul>
+      </div>
+    </details>
+
+    <details>
+      <summary>2. Capture the Visible Area</summary>
+      <div class="pp-help-body">
+        <p>Choose <strong>Visible Area</strong> and click <strong>Capture</strong> to grab exactly what's currently on screen — no scrolling. This is the fastest capture mode and is ideal for a single viewport's worth of content.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary>3. Capture a Selected Area (Region)</summary>
+      <div class="pp-help-body">
+        <p>Choose <strong>Selected Area</strong> and click <strong>Capture</strong>. The popup closes and your cursor becomes a crosshair — click and drag over the page to draw a rectangle around the region you want. Release the mouse to capture just that region, or press <kbd>Esc</kbd> to cancel.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary>4. Crop, Zoom &amp; View</summary>
+      <div class="pp-help-body">
+        <p>On the result screen, use the <strong>+</strong> / <strong>−</strong> zoom controls (25%–300%) to inspect your capture at any scale — zooming never changes the underlying image resolution.</p>
+        <p>Open the editor (the pencil icon) and choose the <strong>Crop</strong> tool to drag a rectangle over the area you want to keep, then click <strong>Apply Crop</strong> to permanently trim the image, or <strong>Cancel Crop</strong> to back out.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary>5. Annotation Tools (Editor)</summary>
+      <div class="pp-help-body">
+        <p>Click the pencil icon on the result screen to open the annotation toolbar:</p>
+        <ul>
+          <li><strong>Pen</strong> — freehand drawing.</li>
+          <li><strong>Rectangle / Circle / Line / Arrow</strong> — drag to draw a shape.</li>
+          <li><strong>Text</strong> — click anywhere to place a text cursor, type, then press <kbd>Enter</kbd> or click away to commit it.</li>
+          <li><strong>Blur / Pixelate</strong> — drag a rectangle over any region (like a name, email, or account number) to obscure it.</li>
+          <li><strong>Crop</strong> — see section 4.</li>
+        </ul>
+        <p>Use the color swatch and brush-size slider to style pen strokes, shapes, and text. Click <strong>Done</strong> to close the annotation toolbar — your edits stay on the image.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary>6. Copy to Clipboard</summary>
+      <div class="pp-help-body">
+        <p>Click <strong>Copy</strong> on the result screen to copy the current image (with any annotations) straight to your clipboard as a PNG — no file is saved to disk. Paste it directly into Slack, Docs, an image editor, or anywhere else that accepts pasted images.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary>7. Download Options</summary>
+      <div class="pp-help-body">
+        <p>Choose an export format from the dropdown, then click <strong>Download</strong>:</p>
+        <ul>
+          <li><strong>PNG</strong> — lossless, best for text-heavy screenshots and annotations.</li>
+          <li><strong>JPEG</strong> — smaller file size, best for photo-heavy captures.</li>
+          <li><strong>WEBP</strong> — modern format balancing quality and size.</li>
+          <li><strong>PDF</strong> — pick a page size (US Legal/Letter, A4, in landscape or portrait) to paginate a tall capture across multiple print-ready pages, or choose <strong>Full Image</strong> for a single continuous page with no pagination — best when the PDF is meant to be viewed digitally rather than printed.</li>
+        </ul>
+      </div>
+    </details>
+
+    <details>
+      <summary>8. Keyboard Shortcuts</summary>
+      <div class="pp-help-body">
+        <ul>
+          <li><kbd>Ctrl</kbd>/<kbd>Cmd</kbd> + <kbd>Z</kbd> — Undo</li>
+          <li><kbd>Ctrl</kbd>/<kbd>Cmd</kbd> + <kbd>Shift</kbd> + <kbd>Z</kbd> (or <kbd>Ctrl</kbd>/<kbd>Cmd</kbd> + <kbd>Y</kbd>) — Redo</li>
+          <li><kbd>Enter</kbd> — commit a text annotation</li>
+          <li><kbd>Esc</kbd> — cancel an in-progress region selection or text annotation</li>
+        </ul>
+      </div>
+    </details>
+
+    <details>
+      <summary>9. Rating &amp; Feedback</summary>
+      <div class="pp-help-body">
+        <p>Enjoying PagePixel? Click the star rating or the feedback (✉) icon on the result screen to open its Chrome Web Store listing and leave a rating or review — it's the best way to help other people find it and to tell us what to improve.</p>
+        <p>PagePixel collects no browsing data or analytics. See the <a href="../privacy/privacy.html">Privacy Policy</a> for details.</p>
+      </div>
+    </details>
+  </main>
+
+  <footer class="pp-footer">
+    <a href="../privacy/privacy.html">Privacy Policy</a>
+    <span class="pp-dot">·</span>
+    <span>Developed by AdxFuel</span>
+  </footer>
+</body>
+</html>

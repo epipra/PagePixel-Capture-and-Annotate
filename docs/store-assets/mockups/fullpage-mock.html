@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>PagePixel — Full page capture (mock)</title>
+<link rel="stylesheet" href="../../../styles/theme.css" />
+<link rel="stylesheet" href="../../../result/result.css" />
+<style>
+  html, body { width: 1280px; height: 800px; overflow: hidden; }
+  .pp-canvas-area { align-items: flex-start; justify-content: center; padding-top: 24px; }
+</style>
+</head>
+<body>
+  <header class="pp-toolbar">
+    <div class="pp-toolbar__brand">
+      <img src="../../../icons/icon32.png" alt="" width="22" height="22" />
+      <span>PagePixel</span>
+    </div>
+    <div class="pp-toolbar__group">
+      <button id="editToggleBtn" class="pp-btn pp-btn--icon" title="Edit &amp; annotate" aria-pressed="false">✎</button>
+      <div class="pp-zoom" role="group" aria-label="Zoom">
+        <button id="zoomOutBtn" class="pp-btn pp-btn--icon" title="Zoom out" aria-label="Zoom out">−</button>
+        <span id="zoomLabel" class="pp-zoom__label">30%</span>
+        <button id="zoomInBtn" class="pp-btn pp-btn--icon" title="Zoom in" aria-label="Zoom in">+</button>
+      </div>
+    </div>
+    <div class="pp-toolbar__group pp-toolbar__group--grow">
+      <select id="formatSelect" class="pp-select" title="Export format" aria-label="Export format">
+        <option value="png" selected>PNG</option>
+        <option value="jpeg">JPEG</option>
+        <option value="webp">WEBP</option>
+        <option value="pdf">PDF</option>
+      </select>
+      <button id="copyBtn" class="pp-btn" title="Copy image to clipboard">Copy</button>
+      <button id="downloadBtn" class="pp-btn pp-btn--primary" title="Download">Download</button>
+    </div>
+    <div class="pp-toolbar__group">
+      <button id="helpBtn" class="pp-btn pp-btn--icon" title="Help">?</button>
+      <button id="feedbackBtn" class="pp-btn pp-btn--icon" title="Send feedback">✉</button>
+      <div class="pp-rating" id="ratingWidget" title="Rate PagePixel on the Chrome Web Store" aria-label="Rate PagePixel">
+        <button type="button" data-star="1" aria-label="Rate 1 star">★</button>
+        <button type="button" data-star="2" aria-label="Rate 2 stars">★</button>
+        <button type="button" data-star="3" aria-label="Rate 3 stars">★</button>
+        <button type="button" data-star="4" aria-label="Rate 4 stars">★</button>
+        <button type="button" data-star="5" aria-label="Rate 5 stars">★</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="pp-canvas-area" id="canvasArea">
+    <div class="pp-canvas-wrap" id="canvasWrap">
+      <canvas id="mainCanvas" width="1400" height="6000"></canvas>
+    </div>
+  </main>
+
+  <footer class="pp-footer">
+    <span>Captured from: example.com/blog/annual-report</span>
+    <span class="pp-dot">·</span>
+    <span>Developed by AdxFuel</span>
+  </footer>
+
+<script>
+const c = document.getElementById('mainCanvas');
+const ctx = c.getContext('2d');
+ctx.fillStyle = '#ffffff';
+ctx.fillRect(0, 0, c.width, c.height);
+
+const grad = ctx.createLinearGradient(0, 0, c.width, 0);
+grad.addColorStop(0, '#0b1f33');
+grad.addColorStop(1, '#1a7a8a');
+ctx.fillStyle = grad;
+ctx.fillRect(0, 0, c.width, 90);
+ctx.fillStyle = '#fff';
+ctx.font = 'bold 32px Segoe UI, sans-serif';
+ctx.fillText('The 2025 Annual Report — Full Story', 50, 56);
+
+let y = 150;
+function heading(text) {
+  ctx.fillStyle = '#10202f';
+  ctx.font = 'bold 26px Segoe UI, sans-serif';
+  ctx.fillText(text, 50, y);
+  y += 40;
+}
+function paragraph(lines) {
+  ctx.fillStyle = '#4c5f6e';
+  ctx.font = '16px Segoe UI, sans-serif';
+  lines.forEach((l) => { ctx.fillText(l, 50, y); y += 26; });
+  y += 20;
+}
+function imageBlock(h, color) {
+  ctx.fillStyle = color;
+  ctx.fillRect(50, y, c.width - 100, h);
+  y += h + 30;
+}
+
+const sections = [
+  ['Executive Summary', ['A record year across every region, with sustained double-digit', 'growth in the core product line and a healthy expansion into new markets.'], '#f4f8f9'],
+  ['Revenue Highlights', ['Total revenue grew 34% year over year, driven primarily by', 'enterprise renewals and a strong Q4 push in APAC.'], '#e8f4f5'],
+  ['Product Milestones', ['Three major releases shipped this year, including the long-requested', 'full-page capture mode and a completely rebuilt annotation editor.'], '#fdece3'],
+  ['Customer Stories', ['Teams across support, design, and QA now rely on screenshot', 'workflows daily to communicate faster and cut review cycles.'], '#f4f8f9'],
+  ['Looking Ahead', ['Next year focuses on deeper export options, more annotation tools,', 'and continued investment in privacy-first, local-only processing.'], '#e8f4f5'],
+];
+
+sections.forEach(([title, lines, color]) => {
+  heading(title);
+  paragraph(lines);
+  imageBlock(280, color);
+});
+
+heading('Thank You');
+paragraph(['— The whole team, and everyone who captured, annotated, and shared', 'a screenshot with PagePixel this year.']);
+
+const scale = (1280 - 56) / c.width;
+c.style.width = (c.width * scale) + 'px';
+c.style.height = (c.height * scale) + 'px';
+document.getElementById('canvasArea').scrollTop = 0;
+</script>
+</body>
+</html>

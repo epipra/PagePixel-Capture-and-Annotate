@@ -1,0 +1,10 @@
+{
+  "extensionName": {
+    "message": "PagePixel — Capture & Annotate",
+    "description": "Extension name shown in chrome://extensions and the Chrome Web Store."
+  },
+  "extensionDescription": {
+    "message": "Capture full-page, visible-area, or selected-region screenshots, annotate them, and export as PNG/JPEG/WEBP/PDF — without leaving your browser.",
+    "description": "Extension description shown in chrome://extensions and the Chrome Web Store."
+  }
+}

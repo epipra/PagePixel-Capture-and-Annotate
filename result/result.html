@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>PagePixel — Result</title>
+<link rel="icon" href="../icons/icon32.png" />
+<link rel="stylesheet" href="../styles/theme.css" />
+<link rel="stylesheet" href="result.css" />
+</head>
+<body>
+  <header class="pp-toolbar">
+    <div class="pp-toolbar__brand">
+      <img src="../icons/icon32.png" alt="" width="22" height="22" />
+      <span>PagePixel</span>
+    </div>
+
+    <div class="pp-toolbar__group">
+      <button id="editToggleBtn" class="pp-btn pp-btn--icon" title="Edit &amp; annotate" aria-pressed="false">✎</button>
+      <div class="pp-zoom" role="group" aria-label="Zoom">
+        <button id="zoomOutBtn" class="pp-btn pp-btn--icon" title="Zoom out" aria-label="Zoom out">−</button>
+        <span id="zoomLabel" class="pp-zoom__label">100%</span>
+        <button id="zoomInBtn" class="pp-btn pp-btn--icon" title="Zoom in" aria-label="Zoom in">+</button>
+      </div>
+    </div>
+
+    <div class="pp-toolbar__group pp-toolbar__group--grow">
+      <select id="formatSelect" class="pp-select" title="Export format" aria-label="Export format">
+        <option value="png">PNG</option>
+        <option value="jpeg">JPEG</option>
+        <option value="webp">WEBP</option>
+        <option value="pdf">PDF</option>
+      </select>
+      <select id="pdfPageSizeSelect" class="pp-select" title="PDF page size" aria-label="PDF page size" hidden></select>
+      <button id="copyBtn" class="pp-btn" title="Copy image to clipboard">Copy</button>
+      <button id="downloadBtn" class="pp-btn pp-btn--primary" title="Download">Download</button>
+    </div>
+
+    <div class="pp-toolbar__group">
+      <button id="helpBtn" class="pp-btn pp-btn--icon" title="Help">?</button>
+      <button id="feedbackBtn" class="pp-btn pp-btn--icon" title="Send feedback">✉</button>
+      <div class="pp-rating" id="ratingWidget" title="Rate PagePixel on the Chrome Web Store" aria-label="Rate PagePixel">
+        <button type="button" data-star="1" aria-label="Rate 1 star">★</button>
+        <button type="button" data-star="2" aria-label="Rate 2 stars">★</button>
+        <button type="button" data-star="3" aria-label="Rate 3 stars">★</button>
+        <button type="button" data-star="4" aria-label="Rate 4 stars">★</button>
+        <button type="button" data-star="5" aria-label="Rate 5 stars">★</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="pp-annotate-bar" id="annotateBar" hidden role="toolbar" aria-label="Annotation tools">
+    <div class="pp-tool-group" id="toolGroup">
+      <button class="pp-btn pp-btn--icon" data-tool="pen" title="Pen">✎</button>
+      <button class="pp-btn pp-btn--icon" data-tool="rect" title="Rectangle">▭</button>
+      <button class="pp-btn pp-btn--icon" data-tool="circle" title="Circle">◯</button>
+      <button class="pp-btn pp-btn--icon" data-tool="line" title="Line">╱</button>
+      <button class="pp-btn pp-btn--icon" data-tool="arrow" title="Arrow">→</button>
+      <button class="pp-btn pp-btn--icon" data-tool="text" title="Text">T</button>
+      <button class="pp-btn pp-btn--icon" data-tool="blur" title="Blur region">◐</button>
+      <button class="pp-btn pp-btn--icon" data-tool="pixelate" title="Pixelate region">▦</button>
+      <button class="pp-btn pp-btn--icon" data-tool="crop" title="Crop">⤢</button>
+    </div>
+
+    <div class="pp-tool-group">
+      <label class="pp-inline-label" title="Color">
+        <input type="color" id="colorPicker" value="#ff7a45" />
+      </label>
+      <label class="pp-inline-label" title="Brush size">
+        <input type="range" id="brushSize" min="1" max="50" value="4" />
+        <span id="brushSizeLabel">4px</span>
+      </label>
+    </div>
+
+    <div class="pp-tool-group">
+      <button id="undoBtn" class="pp-btn pp-btn--icon" title="Undo (Ctrl+Z)">↺</button>
+      <button id="redoBtn" class="pp-btn pp-btn--icon" title="Redo (Ctrl+Shift+Z)">↻</button>
+    </div>
+
+    <div class="pp-tool-group pp-tool-group--end">
+      <button id="cropApplyBtn" class="pp-btn pp-btn--primary" hidden>Apply Crop</button>
+      <button id="cropCancelBtn" class="pp-btn" hidden>Cancel Crop</button>
+      <button id="doneEditBtn" class="pp-btn pp-btn--primary">Done</button>
+    </div>
+  </div>
+
+  <main class="pp-canvas-area" id="canvasArea">
+    <div class="pp-canvas-wrap" id="canvasWrap">
+      <canvas id="mainCanvas"></canvas>
+      <canvas id="overlayCanvas"></canvas>
+      <input type="text" id="textInput" class="pp-text-input" hidden aria-label="Annotation text" />
+    </div>
+    <p id="emptyState" class="pp-empty-state" hidden>Couldn't load this capture. Try capturing again from the toolbar popup.</p>
+  </main>
+
+  <div id="toast" class="pp-toast" role="status" aria-live="polite" hidden></div>
+
+  <footer class="pp-footer">
+    <span id="sourceLabel"></span>
+    <span class="pp-dot">·</span>
+    <span>Developed by AdxFuel</span>
+  </footer>
+
+  <script type="module" src="result.js"></script>
+</body>
+</html>

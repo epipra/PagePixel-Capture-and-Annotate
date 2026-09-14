@@ -1,0 +1,121 @@
+/* PagePixel shared design tokens — deep blue-teal gradient + coral accent,
+   matching the "Scroll Pages + Bracket" icon concept. Shared by popup,
+   result, help, and privacy pages. */
+:root {
+  --pp-navy-900: #0b1f33;
+  --pp-navy-800: #0f2b45;
+  --pp-teal-700: #114a5c;
+  --pp-teal-500: #1a7a8a;
+  --pp-teal-300: #4fb7bd;
+  --pp-coral: #ff7a45;
+  --pp-coral-600: #e8632f;
+  --pp-coral-100: #ffe3d6;
+  --pp-ink: #10202f;
+  --pp-ink-soft: #4c5f6e;
+  --pp-paper: #ffffff;
+  --pp-paper-muted: #f4f8f9;
+  --pp-border: #dbe6e9;
+  --pp-success: #2e9e6b;
+  --pp-danger: #d64545;
+
+  --pp-gradient: linear-gradient(135deg, var(--pp-navy-900) 0%, var(--pp-teal-700) 55%, var(--pp-teal-500) 100%);
+  --pp-radius-sm: 6px;
+  --pp-radius-md: 10px;
+  --pp-radius-lg: 16px;
+  --pp-shadow-sm: 0 1px 2px rgba(11, 31, 51, 0.08);
+  --pp-shadow-md: 0 6px 20px rgba(11, 31, 51, 0.16);
+  --pp-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* The [hidden] attribute's UA-stylesheet display:none has the same
+   specificity as a class selector, so any element carrying both `hidden`
+   and a class that sets `display` (e.g. .pp-btn, .pp-annotate-bar) would
+   otherwise stay visible. Force it to win. */
+[hidden] {
+  display: none !important;
+}
+
+body {
+  margin: 0;
+  font-family: var(--pp-font);
+  color: var(--pp-ink);
+  background: var(--pp-paper-muted);
+}
+
+a {
+  color: var(--pp-teal-500);
+}
+
+button {
+  font-family: inherit;
+}
+
+.pp-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid var(--pp-border);
+  background: var(--pp-paper);
+  color: var(--pp-ink);
+  border-radius: var(--pp-radius-sm);
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.05s ease;
+}
+
+.pp-btn:hover {
+  border-color: var(--pp-teal-300);
+}
+
+.pp-btn:active {
+  transform: translateY(1px);
+}
+
+.pp-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pp-btn--primary {
+  background: var(--pp-coral);
+  border-color: var(--pp-coral);
+  color: #fff;
+}
+
+.pp-btn--primary:hover {
+  background: var(--pp-coral-600);
+  border-color: var(--pp-coral-600);
+}
+
+.pp-btn--icon {
+  padding: 8px;
+  width: 34px;
+  height: 34px;
+}
+
+.pp-btn--active {
+  background: var(--pp-coral-100);
+  border-color: var(--pp-coral);
+  color: var(--pp-coral-600);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+:focus-visible {
+  outline: 2px solid var(--pp-coral);
+  outline-offset: 2px;
+}

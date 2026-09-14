@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Promo marquee</title>
+<style>
+  html, body {
+    margin: 0; width: 1400px; height: 560px; overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: linear-gradient(135deg, #0b1f33 0%, #114a5c 55%, #1a7a8a 100%);
+    display: flex; align-items: center; justify-content: center; gap: 80px;
+    box-sizing: border-box;
+  }
+  .left { color: #fff; max-width: 560px; }
+  img.wordmark { width: 420px; margin-bottom: 26px; }
+  .left p { color: #cfe4e8; font-size: 24px; line-height: 1.5; margin: 0; }
+  .shots { display: flex; gap: 24px; }
+  .card {
+    width: 220px; height: 320px; background: #fff; border-radius: 16px;
+    box-shadow: 0 30px 70px rgba(0,0,0,0.4); overflow: hidden; position: relative;
+  }
+  .card.mid { transform: translateY(-20px); }
+  .card .bar { height: 46px; background: linear-gradient(135deg,#0b1f33,#1a7a8a); }
+  .card .line { height: 10px; background: #eef2f3; margin: 14px 16px; border-radius: 5px; }
+</style>
+</head>
+<body>
+  <div class="left">
+    <img class="wordmark" src="../../../assets/branding/wordmark_on_dark.png" alt="PagePixel — Capture & Annotate" />
+    <p>Full-page, visible-area, or selected screenshots — annotated and exported your way.</p>
+  </div>
+  <div class="shots">
+    <div class="card"><div class="bar"></div><div class="line" style="width:60%"></div><div class="line" style="width:80%"></div><div class="line" style="width:40%"></div></div>
+    <div class="card mid"><div class="bar" style="background:linear-gradient(135deg,#ff7a45,#e8632f)"></div><div class="line" style="width:70%"></div><div class="line" style="width:50%"></div><div class="line" style="width:85%"></div></div>
+    <div class="card"><div class="bar"></div><div class="line" style="width:55%"></div><div class="line" style="width:75%"></div><div class="line" style="width:65%"></div></div>
+  </div>
+</body>
+</html>

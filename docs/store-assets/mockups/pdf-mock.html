@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>PagePixel — PDF export (mock)</title>
+<link rel="stylesheet" href="../../../styles/theme.css" />
+<link rel="stylesheet" href="../../../result/result.css" />
+<style>
+  html, body { width: 1280px; height: 800px; overflow: hidden; }
+  .pp-fake-dropdown {
+    position: absolute;
+    background: #fff;
+    border: 1px solid var(--pp-border);
+    border-radius: var(--pp-radius-sm);
+    box-shadow: var(--pp-shadow-md);
+    width: 220px;
+    overflow: hidden;
+    z-index: 50;
+  }
+  .pp-fake-dropdown div {
+    padding: 9px 14px;
+    font-size: 13px;
+    color: var(--pp-ink);
+    border-bottom: 1px solid var(--pp-paper-muted);
+  }
+  .pp-fake-dropdown div:last-child { border-bottom: none; }
+  .pp-fake-dropdown div.selected { background: var(--pp-coral-100); color: var(--pp-coral-600); font-weight: 600; }
+  .pp-fake-dropdown div:hover { background: var(--pp-paper-muted); }
+</style>
+</head>
+<body>
+  <header class="pp-toolbar">
+    <div class="pp-toolbar__brand">
+      <img src="../../../icons/icon32.png" alt="" width="22" height="22" />
+      <span>PagePixel</span>
+    </div>
+
+    <div class="pp-toolbar__group">
+      <button id="editToggleBtn" class="pp-btn pp-btn--icon" title="Edit &amp; annotate" aria-pressed="false">✎</button>
+      <div class="pp-zoom" role="group" aria-label="Zoom">
+        <button id="zoomOutBtn" class="pp-btn pp-btn--icon" title="Zoom out" aria-label="Zoom out">−</button>
+        <span id="zoomLabel" class="pp-zoom__label">75%</span>
+        <button id="zoomInBtn" class="pp-btn pp-btn--icon" title="Zoom in" aria-label="Zoom in">+</button>
+      </div>
+    </div>
+
+    <div class="pp-toolbar__group pp-toolbar__group--grow" style="position: relative;">
+      <select id="formatSelect" class="pp-select" title="Export format" aria-label="Export format">
+        <option value="png">PNG</option>
+        <option value="jpeg">JPEG</option>
+        <option value="webp">WEBP</option>
+        <option value="pdf" selected>PDF</option>
+      </select>
+      <select id="pdfPageSizeSelect" class="pp-select" title="PDF page size" aria-label="PDF page size">
+        <option>US Letter Landscape</option>
+      </select>
+      <div class="pp-fake-dropdown" id="fakeDropdown">
+        <div>US Legal Landscape</div>
+        <div class="selected">US Letter Landscape</div>
+        <div>A4 Landscape</div>
+        <div>US Letter Portrait</div>
+        <div>US Legal Portrait</div>
+        <div>A4 Portrait</div>
+        <div>Full Image (no pagination)</div>
+      </div>
+      <button id="copyBtn" class="pp-btn" title="Copy image to clipboard">Copy</button>
+      <button id="downloadBtn" class="pp-btn pp-btn--primary" title="Download">Download</button>
+    </div>
+
+    <div class="pp-toolbar__group">
+      <button id="helpBtn" class="pp-btn pp-btn--icon" title="Help">?</button>
+      <button id="feedbackBtn" class="pp-btn pp-btn--icon" title="Send feedback">✉</button>
+      <div class="pp-rating" id="ratingWidget" title="Rate PagePixel on the Chrome Web Store" aria-label="Rate PagePixel">
+        <button type="button" data-star="1" aria-label="Rate 1 star">★</button>
+        <button type="button" data-star="2" aria-label="Rate 2 stars">★</button>
+        <button type="button" data-star="3" aria-label="Rate 3 stars">★</button>
+        <button type="button" data-star="4" aria-label="Rate 4 stars">★</button>
+        <button type="button" data-star="5" aria-label="Rate 5 stars">★</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="pp-canvas-area" id="canvasArea">
+    <div class="pp-canvas-wrap" id="canvasWrap">
+      <canvas id="mainCanvas" width="1400" height="900"></canvas>
+    </div>
+  </main>
+
+  <footer class="pp-footer">
+    <span>Captured from: example.com/dashboard/reports</span>
+    <span class="pp-dot">·</span>
+    <span>Developed by AdxFuel</span>
+  </footer>
+
+<script>
+const c = document.getElementById('mainCanvas');
+const ctx = c.getContext('2d');
+ctx.fillStyle = '#ffffff';
+ctx.fillRect(0, 0, c.width, c.height);
+const grad = ctx.createLinearGradient(0, 0, c.width, 0);
+grad.addColorStop(0, '#0b1f33');
+grad.addColorStop(1, '#1a7a8a');
+ctx.fillStyle = grad;
+ctx.fillRect(0, 0, c.width, 80);
+ctx.fillStyle = '#fff';
+ctx.font = 'bold 28px Segoe UI, sans-serif';
+ctx.fillText('Quarterly Revenue Dashboard', 40, 50);
+ctx.fillStyle = '#f4f8f9';
+ctx.fillRect(40, 120, c.width - 80, 700);
+ctx.strokeStyle = '#dbe6e9';
+ctx.strokeRect(40, 120, c.width - 80, 700);
+ctx.fillStyle = '#4c5f6e';
+ctx.font = '16px Segoe UI, sans-serif';
+ctx.fillText('Ready to export this capture as a print-ready, paginated PDF —', 70, 420);
+ctx.fillText('or one continuous page for digital viewing.', 70, 448);
+
+const scale = 0.68;
+c.style.width = (c.width * scale) + 'px';
+c.style.height = (c.height * scale) + 'px';
+
+// position the fake open dropdown right under the pdf page-size select
+const sel = document.getElementById('pdfPageSizeSelect');
+const rect = sel.getBoundingClientRect();
+const dd = document.getElementById('fakeDropdown');
+dd.style.left = rect.left + 'px';
+dd.style.top = (rect.bottom + 2) + 'px';
+sel.style.visibility = 'hidden';
+</script>
+</body>
+</html>

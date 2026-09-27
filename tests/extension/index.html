@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>PagePixel extension tests</title>
+</head>
+<body>
+<pre id="out">Loading…</pre>
+<script type="module">
+  import { run } from './harness.js';
+  window.loadError = null;
+  try {
+    await import('./lib.test.js');
+  } catch (err) {
+    window.loadError = String(err);
+  }
+  window.runTests = async (filter = '') => {
+    if (window.loadError) return { loadError: window.loadError };
+    const r = await run(filter);
+    document.getElementById('out').textContent = JSON.stringify(r, null, 2);
+    return r;
+  };
+  document.getElementById('out').textContent = window.loadError || 'Ready — call runTests()';
+</script>
+</body>
+</html>

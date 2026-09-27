@@ -3,6 +3,7 @@ import { makeCanvas, decodePixels, canvasBlob, headText } from './fixtures.js';
 import { encodeCanvas, encodePngOptimized, FORMAT_INFO } from '../../extension/lib/encode.js';
 import { prepareUpload, MAX_UPLOAD_BYTES, QUALITY_LADDER } from '../../extension/lib/compress.js';
 import { uploadBlob, UploadError } from '../../extension/lib/upload-client.js';
+import { stitchSlices } from '../../extension/background/fullpage-capture.js';
 
 const samePixels = (a, b) => a.length === b.length && a.every((v, i) => v === b[i]);
 
@@ -188,4 +189,62 @@ test('upload: timeout aborts the request → network', async () => {
 
 test('upload: a URL outside img.omwly.com is refused', async () => {
   await rejects(uploadBlob(png, opts(respond(201, { url: 'https://evil.example/x.png' }))), (err) => eq(err.code, 'bad_response'));
+});
+
+// -------------------------------------------------------- full-page capture --
+
+// A viewport slice as captureVisibleTab would return it: page content plus a scrollbar
+// strip (red here) along the right edge.
+async function sliceDataUrl(width, height, scrollbarPx, color) {
+  const c = document.createElement('canvas');
+  c.width = width;
+  c.height = height;
+  const x = c.getContext('2d');
+  x.fillStyle = color;
+  x.fillRect(0, 0, width, height);
+  x.fillStyle = '#ff0000';
+  x.fillRect(width - scrollbarPx, 0, scrollbarPx, height);
+  return c.toDataURL('image/png');
+}
+
+test('fullpage: stitching trims the scrollbar strip from every slice', async () => {
+  const dpr = 2;
+  const cssScrollbar = 5;
+  const slices = [
+    { y: 0, dataUrl: await sliceDataUrl(200, 120, cssScrollbar * dpr, '#3366cc') },
+    { y: 50, dataUrl: await sliceDataUrl(200, 120, cssScrollbar * dpr, '#33cc66') },
+  ];
+  const blob = await stitchSlices(slices, dpr, cssScrollbar);
+  const bitmap = await createImageBitmap(blob);
+  eq(bitmap.width, 190, 'width');
+  eq(bitmap.height, 220, 'height');
+  const px = await decodePixels(blob, bitmap.width, bitmap.height);
+  let red = 0;
+  for (let i = 0; i < px.length; i += 4) if (px[i] === 255 && px[i + 1] === 0 && px[i + 2] === 0) red++;
+  eq(red, 0, 'scrollbar pixels left in the stitched image:');
+});
+
+test('fullpage: no scrollbar means no trimming', async () => {
+  const blob = await stitchSlices([{ y: 0, dataUrl: await sliceDataUrl(150, 80, 0, '#999999') }], 1, 0);
+  eq((await createImageBitmap(blob)).width, 150);
+});
+
+test('fullpage: content script reports the scrollbar width', async () => {
+  const frame = document.createElement('iframe');
+  frame.style.cssText = 'width:400px;height:300px;border:0';
+  frame.srcdoc = '<!doctype html><body style="margin:0"><div style="height:3000px">tall</div></body>';
+  document.body.append(frame);
+  await new Promise((r) => (frame.onload = r));
+  const win = frame.contentWindow;
+  let listener;
+  win.chrome = { runtime: { onMessage: { addListener: (fn) => (listener = fn) }, sendMessage() {} } };
+  const script = win.document.createElement('script');
+  script.src = '/extension/content/content-script.js';
+  await new Promise((r) => ((script.onload = r), win.document.head.append(script)));
+  let metrics;
+  listener({ type: 'PP_MEASURE' }, null, (m) => (metrics = m));
+  const expected = win.innerWidth - win.document.documentElement.clientWidth;
+  frame.remove();
+  eq(metrics.scrollbarWidth, expected, 'scrollbarWidth');
+  assert(expected > 0, `fixture should have a classic scrollbar (got ${expected})`);
 });

@@ -14,7 +14,7 @@
   - After the security review: xref offsets, startxref, references and JPEG SOI/EOI inside PDFs are checked (a Catalog hidden in image bytes and targeted by the xref is rejected); PNG trailing data, unknown chunks and a non-IHDR first chunk, JPEG without EOI or with trailing data, and a mismatched WEBP RIFF size → 415; a 3 MB PDF tail is rejected without throwing; IPv6 is rate-limited per /64.
   - Mutation checks confirmed the tests fail when the rate-limit, PDF-name, xref-offset or PNG-IEND check is removed.
   - Re-run against `wrangler dev` after hardening: 8 real PagePixel outputs (full-page PNG and multi-page PDF, transparent PNG, JPEG, WEBP, lossless WEBP, full-image and A4 PDFs) are all accepted.
-- **Extension library — 25 in-browser tests** in real Chrome 154 (`tests/extension/index.html`):
+- **Extension library — 28 in-browser tests** in real Chrome 154 (`tests/extension/index.html`):
   - The optimized PNG is pixel-identical to Chrome's PNG (opaque, transparent, 1×1 and odd sizes) and smaller.
   - `encodeCanvas` MIME types are correct for all 4 formats, and lower quality gives smaller files.
   - Quality ladder: 0.92 when it fits, then 0.85, then the 0.80 floor for PDF. Oversize PNG → measured WEBP fallback; none if even WEBP 0.80 doesn't fit; WEBP never offers itself.
@@ -47,6 +47,11 @@
   - The rate limit returns 429 after 10 requests in the window.
 - Found during cleanup: a deleted object keeps being served from Cloudflare's edge cache (`cf-cache-status: HIT`), so takedowns need a cache purge too (procedure in README).
 
+### Found in the first real-extension test (2026-09-28)
+
+- Uploads from the installed extension (PNG 2.59 MB optimized lossless, JPEG/WEBP ≈39 dB PSNR vs the PNG, single-page PDF) all served correctly from img.omwly.com.
+- **Fixed:** Full Page captures included the page's scrollbar, with its thumb at a different position in each stitched slice (a v1.0.0 bug). The content script now reports `scrollbarWidth` and `stitchSlices` trims `scrollbarWidth × devicePixelRatio` from the right edge. 3 new tests cover it; a mutation check confirms the stitching test fails without the fix.
+
 ### Manual checks for v1.1.0 (need the installed extension — Load unpacked `extension/`)
 
 - [ ] `chrome://extensions` shows ID `nokaihkhpnkfakngppmlgbnfajecnpem` for the unpacked build (otherwise add the shown ID to `ALLOWED_ORIGINS` and redeploy).
@@ -57,6 +62,7 @@
 - [ ] Offline (DevTools → Network → Offline on the result tab) → "Couldn't reach img.omwly.com…".
 - [ ] 11 uploads within a minute → "Too many uploads…".
 - [ ] The service worker console shows no errors during capture.
+- [ ] Full Page capture on a page with a classic scrollbar → no scrollbar strip at the right edge of the result.
 
 ## Methodology
 

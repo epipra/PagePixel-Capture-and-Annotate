@@ -47,7 +47,7 @@ export async function captureFullPage(tab, options = {}, onProgress = () => {}) 
   const windowId = tab.windowId;
 
   const metrics = await sendToTab(tabId, { type: 'PP_MEASURE' });
-  const { scrollHeight, viewportHeight, initialScrollY, devicePixelRatio } = metrics;
+  const { scrollHeight, viewportHeight, initialScrollY, devicePixelRatio, scrollbarWidth = 0 } = metrics;
 
   await sendToTab(tabId, { type: 'PP_PREPARE_FULLPAGE' });
 
@@ -78,12 +78,14 @@ export async function captureFullPage(tab, options = {}, onProgress = () => {}) 
 
   slices.sort((a, b) => a.y - b.y);
   onProgress({ phase: 'stitch', current: 0, total: 1 });
-  return stitchSlices(slices, devicePixelRatio || 1);
+  return stitchSlices(slices, devicePixelRatio || 1, scrollbarWidth);
 }
 
-async function stitchSlices(slices, dpr) {
+// Every slice includes the page's scrollbar with its thumb at a different position, so the
+// strip is trimmed off the right edge (the narrower canvas simply clips it).
+export async function stitchSlices(slices, dpr, scrollbarWidth = 0) {
   const bitmaps = await Promise.all(slices.map((s) => createImageBitmap(dataUrlToBlob(s.dataUrl))));
-  const width = bitmaps[0].width;
+  const width = Math.max(1, bitmaps[0].width - Math.round(scrollbarWidth * dpr));
   const lastIdx = slices.length - 1;
   const totalHeight = Math.round(slices[lastIdx].y * dpr) + bitmaps[lastIdx].height;
 

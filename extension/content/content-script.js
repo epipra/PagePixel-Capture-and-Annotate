@@ -12,6 +12,8 @@
       scrollHeight: document.documentElement.scrollHeight,
       viewportHeight: window.innerHeight,
       viewportWidth: window.innerWidth,
+      // captureVisibleTab includes the classic scrollbar; overlay scrollbars report 0 here.
+      scrollbarWidth: Math.max(0, window.innerWidth - document.documentElement.clientWidth),
       devicePixelRatio: window.devicePixelRatio || 1,
       initialScrollY: window.scrollY,
     };

@@ -54,7 +54,7 @@ Small tile 440×300 and marquee 1400×560 — can be composed from `assets/brand
 
 ## Privacy
 
-- **Privacy policy URL (required):** The Store dashboard requires a URL reachable *outside* the extension — `chrome-extension://…` URLs aren't accepted. The policy content already lives at `privacy/privacy.html` in this package; **host that page publicly (e.g. GitHub Pages) before submission** and paste the resulting URL into the dashboard's Privacy Policy field. Keep the two copies in sync if the policy changes.
+- **Privacy policy URL (required):** The Store dashboard requires a URL reachable *outside* the extension — `chrome-extension://…` URLs aren't accepted. The policy content lives at `privacy/privacy.html` (in-package) and `/root/extension-development/privacy-policy.html` (standalone, for public hosting). Currently hosted as a Google Doc: https://docs.google.com/document/d/14vQEE5CEm0Y5mSzAeQjL8Ve4oPGsGx_e6ERgZyEEoDs — **use the Publish-to-web or view-only link, not the `/edit` link**, when pasting into the Dashboard, so the public can't modify it. Keep all copies in sync if the policy changes.
 - **Privacy practices tab — permission justifications** (plain-language, one line each, ready to paste in):
   - `activeTab` — "Captures and, for Full Page/Selected Area, briefly scrolls only the tab you click the extension on."
   - `scripting` — "Injects the on-page helper that measures the page, scrolls it for Full Page capture, and draws the drag-to-select overlay — only runs when you trigger a capture."

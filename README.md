@@ -8,7 +8,7 @@ Full product spec and rationale: `../PagePixel-BUILD-GUIDE.md` (one level up, in
 
 1. Open `chrome://extensions`.
 2. Enable **Developer mode** (top right).
-3. Click **Load unpacked** and select this folder (`PagePixel Capture and Annotate/`).
+3. Click **Load unpacked** and select this folder (`PagePixel/`).
 4. Pin the PagePixel icon from the extensions toolbar overflow menu for quick access.
 
 To reload after edits: click the refresh icon on the extension's card in `chrome://extensions`. If you edited `background/service-worker.js` or its imports, that's enough — service workers reload automatically on next use, but a manual refresh guarantees it.

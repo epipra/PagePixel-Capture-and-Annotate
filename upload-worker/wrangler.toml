@@ -1,0 +1,21 @@
+name = "pagepixel-upload"
+main = "src/index.js"
+compatibility_date = "2026-08-01"
+workers_dev = false
+preview_urls = false
+routes = [{ pattern = "upload.omwly.com", custom_domain = true }]
+
+[[r2_buckets]]
+binding = "BUCKET"
+bucket_name = "img-omwly"
+
+[[ratelimits]]
+name = "UPLOAD_LIMITER"
+namespace_id = "1001"
+simple = { limit = 10, period = 60 }
+
+[vars]
+PUBLIC_BASE_URL = "https://img.omwly.com"
+# Store build + unpacked dev build (ID derived from F:\browser-extensions\PagePixel\extension).
+ALLOWED_ORIGINS = "chrome-extension://epcfhbbgdknmhomfimblbokfejlgdgne,chrome-extension://nokaihkhpnkfakngppmlgbnfajecnpem"
+MAX_BYTES = "5242880"

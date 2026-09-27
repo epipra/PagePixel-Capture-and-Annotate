@@ -1,0 +1,22 @@
+{
+  "name": "pagepixel-upload-worker",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "^0.22.0",
+    "vitest": "~4.1.0",
+    "wrangler": "^4.142.0"
+  },
+  "allowScripts": {
+    "workerd@1.20260815.1": true,
+    "workerd@1.20260926.1": true,
+    "esbuild@0.28.1": true,
+    "sharp@0.35.2": true,
+    "sharp@0.35.4": true
+  }
+}

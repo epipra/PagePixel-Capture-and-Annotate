@@ -14,13 +14,24 @@
   </header>
 
   <main class="pp-privacy-main">
-    <p class="pp-updated">Last updated: September 9, 2026</p>
+    <p class="pp-updated">Last updated: September 28, 2026</p>
 
     <h2>Summary</h2>
-    <p><strong>PagePixel — Capture &amp; Annotate does not collect, store, transmit, or sell any of your browsing data, personal information, or screenshot content.</strong> Everything PagePixel captures and edits stays on your device.</p>
+    <p><strong>PagePixel — Capture &amp; Annotate does not collect or sell your browsing data or personal information, and has no analytics or tracking.</strong> Screenshots stay on your device unless you click <strong>Upload</strong>. Only then is that one image sent to PagePixel's image host, where it becomes publicly viewable by anyone who has its link.</p>
 
     <h2>What PagePixel does</h2>
-    <p>PagePixel captures screenshots of the page you're currently viewing (visible area, full page, or a selected region), lets you annotate them in an editor, and exports the result as an image or PDF — either downloaded to your computer or copied to your clipboard.</p>
+    <p>PagePixel captures screenshots of the page you're currently viewing (visible area, full page, or a selected region), lets you annotate them in an editor, and exports the result as an image or PDF — downloaded to your computer, copied to your clipboard, or, if you choose, uploaded to get a shareable link.</p>
+
+    <h2>Uploading and sharing</h2>
+    <ul>
+      <li><strong>Only when you click Upload.</strong> Nothing is uploaded automatically, in the background, or for any capture you don't explicitly upload.</li>
+      <li><strong>What is sent:</strong> the current image, including your annotations, in the format you selected (PNG, JPEG, WEBP, or PDF). The page's address, its title, and any other page content are not sent, and there is no account or sign-in.</li>
+      <li><strong>Where it goes:</strong> to PagePixel's upload service at <code>upload.omwly.com</code>, which stores the file at <code>img.omwly.com</code>. Both run on Cloudflare (Cloudflare Workers and R2 storage).</li>
+      <li><strong>Who can see it:</strong> anyone who has the link. Each link contains a long random code, so it can't be guessed or found by browsing, but it is public: anyone you share it with, or anyone they pass it on to, can open it without signing in.</li>
+      <li><strong>How long it's kept:</strong> uploaded images are stored permanently. Don't upload anything you wouldn't want to be public — use the Blur or Pixelate tools to hide sensitive details first.</li>
+      <li><strong>Your IP address</strong> is used only momentarily to limit how many uploads can be made per minute, to prevent abuse. PagePixel does not store it or any other information about you. As the hosting provider, Cloudflare processes network requests under its own <a href="https://www.cloudflare.com/privacypolicy/" target="_blank" rel="noopener noreferrer">privacy policy</a>.</li>
+      <li><strong>Removal:</strong> to have an uploaded image deleted, contact us through the PagePixel Chrome Web Store listing and include its link.</li>
+    </ul>
 
     <h2>What data we access, and why</h2>
     <ul>
@@ -31,16 +42,17 @@
       <li><strong>storage</strong> — remembers your last-used capture mode, delay, and direction settings locally, so the popup opens with your preferences next time.</li>
     </ul>
     <p>A captured image is also held briefly in your browser's local IndexedDB (no special permission required for this) while it's handed off from the capture step to the editor tab, and is deleted as soon as the editor loads it.</p>
+    <p>Uploading needs no extra permission: it is a normal web request from the extension to <code>upload.omwly.com</code>, made only when you click Upload.</p>
     <p>PagePixel does not request access to your browsing history, does not run on pages you haven't explicitly captured from, and does not include any remote code, analytics, or third-party trackers.</p>
 
     <h2>Data sharing</h2>
-    <p>PagePixel does not send any data — screenshots, page content, or otherwise — to any server, and has no backend of its own. Nothing is sold or shared with third parties, because nothing leaves your browser in the first place.</p>
+    <p>The only data that ever leaves your browser is an image you choose to upload, which is stored and served publicly as described above. PagePixel does not sell, rent, or share any data with third parties for advertising or any other purpose, and does not use uploaded images for anything other than hosting them at their link.</p>
 
     <h2>Changes to this policy</h2>
     <p>If this policy changes, the "Last updated" date above will change and the update will ship with a new version of the extension.</p>
 
     <h2>Contact</h2>
-    <p>Questions about this policy can be raised via the feedback link in the extension's Help menu, or through PagePixel's Chrome Web Store listing once published.</p>
+    <p>Questions about this policy, or requests to remove an uploaded image, can be sent through PagePixel's <a href="https://chromewebstore.google.com/detail/epcfhbbgdknmhomfimblbokfejlgdgne" target="_blank" rel="noopener noreferrer">Chrome Web Store listing</a> (the feedback ✉ button on the result screen opens it).</p>
   </main>
 
   <footer class="pp-footer">

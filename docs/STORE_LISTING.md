@@ -10,9 +10,9 @@ Fill these into the Developer Dashboard when submitting (build guide §7). Every
 
 ## Short summary (~132 chars)
 
-> Capture full-page, visible-area, or selected screenshots, annotate them, and export as PNG/JPEG/WEBP/PDF — right in your browser.
+> Capture full-page, visible, or selected screenshots, annotate them, then export as PNG/JPEG/WEBP/PDF or upload for a public link.
 
-(131 characters)
+(129 characters — v1.1.0)
 
 ## Full description (draft)
 
@@ -29,8 +29,11 @@ Fill these into the Developer Dashboard when submitting (build guide §7). Every
 > **Export your way**
 > Download as PNG, JPEG, or WEBP, export a print-ready PDF (7 page-size options, including a single continuous "Full Image" page for long captures), or copy straight to your clipboard — no forced file saves.
 >
+> **Upload & share in one click** (new in 1.1)
+> Click Upload to get a permanent public link on img.omwly.com — it opens in a new tab with a one-click Copy link. Works for every capture mode and every format. PagePixel optimizes the file first (lossless for PNG) so uploads stay small and fast. No account needed.
+>
 > **Your data stays yours**
-> PagePixel collects no browsing data, no analytics, and has no backend. Every capture and edit happens locally in your browser. See the privacy policy for details.
+> PagePixel collects no browsing data and has no analytics. Captures and edits happen locally in your browser; an image only leaves your device when you click Upload, and then only that image is sent. Uploaded links are public — anyone with the link can view them. See the privacy policy for details.
 >
 > Developed by AdxFuel.
 
@@ -61,12 +64,23 @@ Small tile 440×300 and marquee 1400×560 — can be composed from `assets/brand
   - `downloads` — "Saves your exported screenshot/PDF to disk when you click Download."
   - `clipboardWrite` — "Copies the current image to your clipboard when you click Copy."
   - `storage` — "Remembers your last-used capture mode, delay, and direction settings locally, so the popup opens with your preferences next time."
-- **Data collection disclosure:** none — no data is collected, transmitted, or sold. State this plainly in the Data Usage section of the Privacy Practices tab.
+- **Data collection disclosure (changed in 1.1.0):** v1.0.0 declared "no data collected". With Upload, the screenshot a user chooses to upload is transmitted and stored, so the Data Usage section must now declare it (see the checklist below).
+
+## v1.1.0 Dashboard checklist (account holder)
+
+1. **Privacy practices → Data usage:** tick **Website content** (the screenshots users choose to upload). Leave everything else unticked: no personally identifiable info, health, financial, authentication, personal communications, location, web history, or user activity is collected.
+2. Tick all three certifications: data is **not sold** to third parties, **not used or transferred for purposes unrelated to the item's single purpose**, and **not used to determine creditworthiness or for lending**.
+3. **Single purpose** description (if asked to update): "Capture, annotate, and export or share screenshots of the current web page."
+4. **Permission justifications:** unchanged — v1.1.0 adds no permissions and no host permissions (uploads use a CORS request to upload.omwly.com).
+5. **Remote code:** still "No" — the extension only sends image bytes to its upload endpoint and never loads or executes remote code.
+6. **Privacy policy URL:** update the hosted Google Doc to match `extension/privacy/privacy.html` (the Uploading and sharing section, the new Data sharing wording, and the September 28, 2026 date) *before* submitting. Use the Publish-to-web/view-only link.
+7. **Store listing:** paste the new short summary and full description above; optionally add a screenshot of the share page.
+8. **Package:** upload `dist/PagePixel-1.1.0.zip` (built by `scripts/build-zip.ps1`) and submit for review.
 
 ## Visibility
 
 Recommend starting **Unlisted** for a first internal/self test pass, then switching to **Public** once satisfied.
 
-## After first publish
+## Listing URL
 
-- Note the generated Chrome Web Store item URL and replace the `STORE_LISTING_URL` placeholder in `result/result.js` (used by the Feedback button and star-rating widget) with the real listing URL, then ship that as a `1.0.1` update.
+Published as https://chromewebstore.google.com/detail/epcfhbbgdknmhomfimblbokfejlgdgne. `STORE_LISTING_URL` in `extension/result/result.js` (Feedback button and star rating) points there as of v1.1.0.

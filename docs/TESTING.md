@@ -1,5 +1,49 @@
 # Testing status
 
+## v1.1.0 — Cloud Upload (2026-09-28)
+
+### Automated, passing
+
+- **Upload Worker — 35 vitest tests** in the real Workers runtime with local R2 (`cd upload-worker && npm test`):
+  - Each of PNG/JPEG/WEBP/PDF is stored with the content type taken from its bytes (not the client header), immutable cache control, and byte-identical content; the URL has a 22-char key.
+  - CORS preflight works; unknown or missing Origin gets 403 with no CORS headers.
+  - Missing or wrong key → 403. The rate limiter is called with `CF-Connecting-IP` → 429.
+  - 5 MB + 1 byte → 413; exactly 5 MB → 201; an oversized Content-Length → 413 early.
+  - Empty/SVG/HTML/GIF/non-WEBP RIFF → 415; unknown path → 404; GET → 405; R2 failure → 500.
+  - The PDF allowlist accepts both real `pdf-writer.js` layouts, including look-alike `/JS` bytes inside image data. It rejects OpenAction, hex-escaped `/J#53`, string literals, `/URI`, non-DCT filters, data appended after `%%EOF`, a wrong `/Length`, and an altered content stream.
+  - A mutation check confirmed the tests fail when the rate-limit or PDF name check is removed.
+- **Extension library — 25 in-browser tests** in real Chrome 154 (`tests/extension/index.html`):
+  - The optimized PNG is pixel-identical to Chrome's PNG (opaque, transparent, 1×1 and odd sizes) and smaller.
+  - `encodeCanvas` MIME types are correct for all 4 formats, and lower quality gives smaller files.
+  - Quality ladder: 0.92 when it fits, then 0.85, then the 0.80 floor for PDF. Oversize PNG → measured WEBP fallback; none if even WEBP 0.80 doesn't fit; WEBP never offers itself.
+  - The upload client maps 429/403/413/415/500/502/network/timeout/foreign-URL responses to the specified messages.
+- **Real-page measurement**: a 1234×50157 full-page capture of developer.chrome.com:
+  - Chrome PNG 6.5 MB → optimized PNG 4.3 MB, lossless, which fits the 5 MB limit (~8 s).
+  - On a 16,000 px slice: −34% (2.07 → 1.36 MB), pixel-identical.
+  - Chrome 154 handled the 50,157 px canvas without hitting a size limit.
+- **Result + share pages** (served source; only `chrome.*` and the upload `fetch` mocked):
+  - Feedback opens the real listing URL. Copy is disabled for PDF, with its tooltip.
+  - Upload in each of the 4 formats sends the right bytes, type and key, then opens `share/share.html?url=…&fmt=…&size=…`, with busy labels and restored buttons.
+  - A 429 shows "Too many uploads…" and opens no tab. Download still works.
+  - Oversize: a 6.4 MB noise PNG opens the dialog. Cancel uploads nothing; accept uploads the measured 1.9 MB WEBP.
+  - The share page rejects `https://evil.example/x.png` and shows the PDF card, a pre-selected URL and "Open PDF".
+- **Local end-to-end against `wrangler dev`** (the real Worker with local R2), using the real `upload-client.js` and key:
+  - The 50,157 px real capture uploaded as PNG (4.49 MB, lossless), as a multi-page PDF (0.85) and as JPEG (0.85). SHA-256 of each stored R2 object equals the bytes sent.
+  - Wrong key → `bad_key`; an SVG labelled `image/png` → `unsupported_type`.
+  - The rate limit trips after 10 uploads per minute.
+- `scripts/build-zip.ps1` produces a 33-entry zip. `manifest.json` is at the root, all paths use forward slashes, and there are no docs, tests or example config inside.
+
+### Manual checks for v1.1.0 (need the installed extension — Load unpacked `extension/`)
+
+- [ ] `chrome://extensions` shows ID `nokaihkhpnkfakngppmlgbnfajecnpem` for the unpacked build (otherwise add the shown ID to `ALLOWED_ORIGINS` and redeploy).
+- [ ] Visible Area, Full Page and Selected Area captures → Upload works for each, in PNG, JPEG, WEBP and PDF; the share tab opens.
+- [ ] Share tab → Copy link → paste the link in an incognito window: it opens without signing in.
+- [ ] Copy with JPEG selected → paste into Paint/Slack works; toast says "pasted as PNG".
+- [ ] A very long Full Page capture → the oversize dialog (or a lossless fit) behaves as described.
+- [ ] Offline (DevTools → Network → Offline on the result tab) → "Couldn't reach img.omwly.com…".
+- [ ] 11 uploads within a minute → "Too many uploads…".
+- [ ] The service worker console shows no errors during capture.
+
 ## Methodology
 
 This build's automated Chrome install (`chrome --load-extension=...`) is blocked by Google Chrome's own policy in this environment — Chrome's internal log records `--disable-extensions-except is not allowed in Google Chrome, ignoring` and silently drops `--load-extension` too. This restriction targets command-line/CI-driven extension loading specifically; it does **not** affect the normal "Load unpacked" button in `chrome://extensions`, so manual testing (below) is unaffected.

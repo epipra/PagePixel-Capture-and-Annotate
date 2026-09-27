@@ -35,6 +35,18 @@
   - The rate limit trips after 10 uploads per minute.
 - `scripts/build-zip.ps1` produces a 33-entry zip. `manifest.json` is at the root, all paths use forward slashes, and there are no docs, tests or example config inside.
 
+### Production (deployed 2026-09-28, Worker `pagepixel-upload`, version 40b4162c)
+
+- `upload.omwly.com` is attached as a Worker custom domain; `UPLOAD_KEY` secret is set.
+- Live checks against https://upload.omwly.com/upload:
+  - Preflight from the store origin → 204 with ACAO.
+  - Foreign origin → 403 `origin_not_allowed`; no key → 403 `bad_key`.
+  - SVG labelled PNG → 415; a 5.9 MB PNG → 413.
+  - A real PNG → 201, and `https://img.omwly.com/<key>.png` serves 200 `image/png` with immutable caching and byte-identical content.
+  - A real PagePixel PDF → 201.
+  - The rate limit returns 429 after 10 requests in the window.
+- Found during cleanup: a deleted object keeps being served from Cloudflare's edge cache (`cf-cache-status: HIT`), so takedowns need a cache purge too (procedure in README).
+
 ### Manual checks for v1.1.0 (need the installed extension — Load unpacked `extension/`)
 
 - [ ] `chrome://extensions` shows ID `nokaihkhpnkfakngppmlgbnfajecnpem` for the unpacked build (otherwise add the shown ID to `ALLOWED_ORIGINS` and redeploy).

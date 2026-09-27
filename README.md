@@ -65,6 +65,14 @@ npx wrangler deploy  # production; creates the upload.omwly.com custom-domain DN
 
 The shared key lives in the Worker secret `UPLOAD_KEY` (`npx wrangler secret put UPLOAD_KEY`) and in `extension/lib/upload-config.js`; the two must match. It ships inside the extension, so it only slows abuse down — the rate limit, size cap and type checks are the real protection.
 
+### Removing an uploaded image (takedown)
+
+Objects are served with `Cache-Control: public, max-age=31536000, immutable`, so deleting from R2 alone is not enough — Cloudflare's edge keeps serving the cached copy.
+
+1. `cd upload-worker && npx wrangler r2 object delete img-omwly/<key> --remote` (or R2 → img-omwly → Objects → Delete).
+2. Cloudflare dashboard → omwly.com → **Caching → Configuration → Custom Purge → URL** → `https://img.omwly.com/<key>` → Purge.
+3. Verify: `curl -I https://img.omwly.com/<key>` returns 404.
+
 ## Tests
 
 - Worker: `cd upload-worker && npm test`.

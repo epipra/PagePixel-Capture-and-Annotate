@@ -46,9 +46,9 @@ The optimized PNG encoder is also used by Download and Copy for PNG (same pixels
 Checks in order:
 1. `Origin` ∈ `ALLOWED_ORIGINS` (comma-separated var) → else 403 `origin_not_allowed`
 2. `X-PagePixel-Key` equals secret `UPLOAD_KEY` (constant-time compare) → else 403 `bad_key`
-3. Rate limit binding keyed by `CF-Connecting-IP`, 10 / 60 s → else 429 `rate_limited`
+3. Rate limit binding keyed by `CF-Connecting-IP` (IPv6 grouped per /64), 10 / 60 s → else 429 `rate_limited`
 4. `Content-Length` present and ≤ `MAX_BYTES` (5,242,880), actual body length equal and ≤ cap → else 411/413 `too_large`
-5. Magic bytes: PNG `89 50 4E 47 0D 0A 1A 0A`, JPEG `FF D8 FF`, WEBP `RIFF????WEBP`, PDF `%PDF-`. PDFs containing `/JavaScript`, `/JS`, `/OpenAction`, `/AA`, `/Launch`, `/EmbeddedFile`, `/URI`, `/SubmitForm`, `/RichMedia` are rejected → else 415 `unsupported_type`. The token scan skips `stream … endstream` bodies: JPEG page data is near-random bytes and would otherwise match `/JS` by chance in roughly a third of large PDFs.
+5. Magic bytes + structure: PNG `89 50 4E 47 0D 0A 1A 0A` whose chunks are only IHDR (first)/PLTE/tRNS/IDAT/IEND and end exactly at IEND; JPEG `FF D8 FF` ending in EOI `FF D9`; WEBP `RIFF????WEBP` whose RIFF size equals the body length; PDF `%PDF-` matching the exact structure `extension/lib/pdf-writer.js` emits (allowlisted names, JPEG image streams skipped by /Length and required to be SOI…EOI, fixed content stream, objects numbered 1..N, every xref offset and startxref exact, no dangling references, tail ≤ 64 KB) → else 415 `unsupported_type`. (Revised after security review: a token blocklist and an unchecked xref table were both bypassable.)
 6. `BUCKET.put(key, bytes, { httpMetadata: { contentType, cacheControl: 'public, max-age=31536000, immutable' } })` → 500 `storage_failed` on error
 7. 201 `{ "url": "https://img.omwly.com/<key>" }`
 

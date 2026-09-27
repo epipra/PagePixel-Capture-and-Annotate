@@ -1,7 +1,7 @@
 import { env } from 'cloudflare:test';
 import { describe, it, expect } from 'vitest';
 import worker, { sniffType, isPagePixelPdf, newKey } from '../src/index.js';
-import { LETTER_PORTRAIT, FULL_IMAGE } from './fixtures/pdfs.js';
+import { LETTER_PORTRAIT, FULL_IMAGE, CHROME_JPEG, CHROME_WEBP } from './fixtures/files.js';
 
 const STORE_ORIGIN = 'chrome-extension://epcfhbbgdknmhomfimblbokfejlgdgne';
 const KEY = 'test-upload-key';
@@ -18,13 +18,23 @@ const bytes = (...parts) => {
   return out;
 };
 const b64 = (s) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
-const latin1 = (u8) => new TextDecoder('latin1').decode(u8);
+// Byte-exact (TextDecoder 'latin1' is really windows-1252 and would remap 0x80–0x9F).
+const latin1 = (u8) => Array.from(u8, (b) => String.fromCharCode(b)).join('');
 const fromLatin1 = (s) => Uint8Array.from(s, (c) => c.charCodeAt(0));
 
-const PNG = bytes([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a], 'rest-of-png');
-const JPEG = bytes([0xff, 0xd8, 0xff, 0xe0], 'rest-of-jpeg');
-const WEBP = bytes('RIFF', [0x10, 0, 0, 0], 'WEBPVP8 rest');
+// Real 2x2 images encoded by Chrome's canvas (toBlob).
+const PNG = b64('iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAEklEQVR4AWL638HwH4SZGKAAAAAA//+RFkNnAAAABklEQVQDAETyBREDk9cNAAAAAElFTkSuQmCC');
+const JPEG = b64(CHROME_JPEG);
+const WEBP = b64(CHROME_WEBP);
 const PDF = b64(LETTER_PORTRAIT);
+
+const u32be = (n) => [(n >>> 24) & 255, (n >>> 16) & 255, (n >>> 8) & 255, n & 255];
+const chunk = (type, data) => bytes(u32be(data.length), type, data, [0, 0, 0, 0]);
+// Structurally valid PNG (IHDR, IDAT, IEND) of exactly `size` bytes; CRCs aren't checked server-side.
+function pngOfSize(size) {
+  const fixed = 8 + (12 + 13) + 12 + 12;
+  return bytes([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a], chunk('IHDR', new Uint8Array(13)), chunk('IDAT', new Uint8Array(size - fixed)), chunk('IEND', new Uint8Array()));
+}
 
 function request(body, { origin = STORE_ORIGIN, key = KEY, method = 'POST', path = '/upload', headers = {} } = {}) {
   const h = new Headers(headers);
@@ -124,15 +134,21 @@ describe('rejections', () => {
   });
 
   it('413 when the body is one byte over 5 MB', async () => {
-    const big = new Uint8Array(5 * 1024 * 1024 + 1);
-    big.set(PNG);
-    await expectError(await call(request(big)), 413, 'too_large');
+    await expectError(await call(request(pngOfSize(5 * 1024 * 1024 + 1))), 413, 'too_large');
   });
 
   it('accepts a body of exactly 5 MB', async () => {
-    const max = new Uint8Array(5 * 1024 * 1024);
-    max.set(PNG);
-    expect((await call(request(max))).status).toBe(201);
+    expect((await call(request(pngOfSize(5 * 1024 * 1024)))).status).toBe(201);
+  });
+
+  it('rate-limits IPv6 clients per /64, IPv4 per address', async () => {
+    const seen = [];
+    const limiter = { limit: async ({ key }) => (seen.push(key), { success: true }) };
+    await call(request(PNG, { headers: { 'CF-Connecting-IP': '2001:db8:85a3:1:aaaa:bbbb:cccc:dddd' } }), { UPLOAD_LIMITER: limiter });
+    await call(request(PNG, { headers: { 'CF-Connecting-IP': '2001:db8:85a3:1::7' } }), { UPLOAD_LIMITER: limiter });
+    await call(request(PNG, { headers: { 'CF-Connecting-IP': '2001:DB8:85A3::1' } }), { UPLOAD_LIMITER: limiter });
+    await call(request(PNG, { headers: { 'CF-Connecting-IP': '198.51.100.4' } }), { UPLOAD_LIMITER: limiter });
+    expect(seen).toEqual(['2001:db8:85a3:1::/64', '2001:db8:85a3:1::/64', '2001:db8:85a3:0::/64', '198.51.100.4']);
   });
 
   it('413 early when Content-Length declares more than 5 MB', async () => {
@@ -146,6 +162,20 @@ describe('rejections', () => {
     ['HTML', bytes('<!doctype html><title>x</title>')],
     ['GIF', bytes('GIF89a....')],
     ['RIFF that is not WEBP', bytes('RIFF', [0, 0, 0, 0], 'AVI LIST')],
+  ]) {
+    it(`415 for ${name}`, async () => {
+      await expectError(await call(request(body)), 415, 'unsupported_type');
+    });
+  }
+
+  for (const [name, body] of [
+    ['a PNG with data appended after IEND', bytes(PNG, 'PK\x03\x04 hidden zip')],
+    ['a PNG header followed by arbitrary bytes', bytes(PNG.subarray(0, 8), new Uint8Array(4096))],
+    ['a PNG with a non-allowlisted chunk', bytes(PNG.subarray(0, 33), chunk('zTXt', bytes('payload')), PNG.subarray(33))],
+    ['a PNG whose first chunk is not IHDR', bytes(PNG.subarray(0, 8), chunk('IDAT', new Uint8Array(4)), chunk('IEND', new Uint8Array()))],
+    ['a JPEG with data after the EOI marker', bytes(JPEG, 'trailing payload')],
+    ['a JPEG header with no EOI', JPEG.subarray(0, JPEG.length - 2)],
+    ['a WEBP whose RIFF size does not match', bytes(WEBP, 'trailing payload')],
   ]) {
     it(`415 for ${name}`, async () => {
       await expectError(await call(request(body)), 415, 'unsupported_type');
@@ -177,6 +207,31 @@ describe('PDF allowlist', () => {
     const junk = '/JS /OpenAction endstream endobj ';
     const edited = text.slice(0, start + 100) + junk + text.slice(start + 100 + junk.length);
     expect(isPagePixelPdf(fromLatin1(edited))).toBe(true);
+  });
+
+  // Review finding: viewers locate objects through the xref table, so a Catalog hidden inside
+  // unchecked image bytes and pointed to by xref entry 1 must be rejected.
+  it('rejects a hidden object inside image data targeted by the xref table', () => {
+    const start = text.indexOf('stream\n', text.indexOf('/DCTDecode')) + 'stream\n'.length;
+    const hidden = '1 0 obj\n<< /Type /Catalog /Pages 2 0 R /OpenAction 3 0 R >>\nendobj\n';
+    const hiddenAt = start + 200;
+    let edited = text.slice(0, hiddenAt) + hidden + text.slice(hiddenAt + hidden.length);
+    const xref = edited.lastIndexOf('\nxref\n') + 1;
+    const entry1 = edited.indexOf('\n', edited.indexOf('65535 f \n', xref)) + 1;
+    edited = edited.slice(0, entry1) + String(hiddenAt).padStart(10, '0') + edited.slice(entry1 + 10);
+    expect(isPagePixelPdf(fromLatin1(edited))).toBe(false);
+  });
+
+  it('rejects a wrong startxref, a dangling reference and a non-JPEG image stream', () => {
+    expect(isPagePixelPdf(tamper(/startxref\n(\d+)/, (m, n) => `startxref\n${Number(n) - 1}`))).toBe(false);
+    expect(isPagePixelPdf(tamper('/Pages 2 0 R >>', '/Pages 0 0 R >>'))).toBe(false);
+    const start = text.indexOf('stream\n', text.indexOf('/DCTDecode')) + 'stream\n'.length;
+    expect(isPagePixelPdf(fromLatin1(text.slice(0, start) + 'XX' + text.slice(start + 2)))).toBe(false);
+  });
+
+  it('rejects a huge tail without throwing', () => {
+    const huge = fromLatin1(text.replace(/%%EOF$/, '%%EOF' + ' '.repeat(3 * 1024 * 1024)));
+    expect(isPagePixelPdf(huge)).toBe(false);
   });
 
   for (const [name, from, to] of [

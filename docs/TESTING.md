@@ -4,14 +4,16 @@
 
 ### Automated, passing
 
-- **Upload Worker — 35 vitest tests** in the real Workers runtime with local R2 (`cd upload-worker && npm test`):
+- **Upload Worker — 46 vitest tests** in the real Workers runtime with local R2 (`cd upload-worker && npm test`):
   - Each of PNG/JPEG/WEBP/PDF is stored with the content type taken from its bytes (not the client header), immutable cache control, and byte-identical content; the URL has a 22-char key.
   - CORS preflight works; unknown or missing Origin gets 403 with no CORS headers.
   - Missing or wrong key → 403. The rate limiter is called with `CF-Connecting-IP` → 429.
   - 5 MB + 1 byte → 413; exactly 5 MB → 201; an oversized Content-Length → 413 early.
   - Empty/SVG/HTML/GIF/non-WEBP RIFF → 415; unknown path → 404; GET → 405; R2 failure → 500.
   - The PDF allowlist accepts both real `pdf-writer.js` layouts, including look-alike `/JS` bytes inside image data. It rejects OpenAction, hex-escaped `/J#53`, string literals, `/URI`, non-DCT filters, data appended after `%%EOF`, a wrong `/Length`, and an altered content stream.
-  - A mutation check confirmed the tests fail when the rate-limit or PDF name check is removed.
+  - After the security review: xref offsets, startxref, references and JPEG SOI/EOI inside PDFs are checked (a Catalog hidden in image bytes and targeted by the xref is rejected); PNG trailing data, unknown chunks and a non-IHDR first chunk, JPEG without EOI or with trailing data, and a mismatched WEBP RIFF size → 415; a 3 MB PDF tail is rejected without throwing; IPv6 is rate-limited per /64.
+  - Mutation checks confirmed the tests fail when the rate-limit, PDF-name, xref-offset or PNG-IEND check is removed.
+  - Re-run against `wrangler dev` after hardening: 8 real PagePixel outputs (full-page PNG and multi-page PDF, transparent PNG, JPEG, WEBP, lossless WEBP, full-image and A4 PDFs) are all accepted.
 - **Extension library — 25 in-browser tests** in real Chrome 154 (`tests/extension/index.html`):
   - The optimized PNG is pixel-identical to Chrome's PNG (opaque, transparent, 1×1 and odd sizes) and smaller.
   - `encodeCanvas` MIME types are correct for all 4 formats, and lower quality gives smaller files.

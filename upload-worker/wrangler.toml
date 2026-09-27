@@ -1,4 +1,5 @@
 name = "pagepixel-upload"
+account_id = "706123b2a337afe872cf289e82de2185"
 main = "src/index.js"
 compatibility_date = "2026-08-01"
 workers_dev = false

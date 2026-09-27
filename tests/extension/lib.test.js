@@ -3,7 +3,7 @@ import { makeCanvas, decodePixels, canvasBlob, headText } from './fixtures.js';
 import { encodeCanvas, encodePngOptimized, FORMAT_INFO } from '../../extension/lib/encode.js';
 import { prepareUpload, MAX_UPLOAD_BYTES, QUALITY_LADDER } from '../../extension/lib/compress.js';
 import { uploadBlob, UploadError } from '../../extension/lib/upload-client.js';
-import { stitchSlices } from '../../extension/background/fullpage-capture.js';
+import { stitchSlices, captureFullPage } from '../../extension/background/fullpage-capture.js';
 
 const samePixels = (a, b) => a.length === b.length && a.every((v, i) => v === b[i]);
 
@@ -247,4 +247,110 @@ test('fullpage: content script reports the scrollbar width', async () => {
   frame.remove();
   eq(metrics.scrollbarWidth, expected, 'scrollbarWidth');
   assert(expected > 0, `fixture should have a classic scrollbar (got ${expected})`);
+});
+
+// A fake tab for captureFullPage: a synthetic page whose every row y has a unique colour,
+// a content script that scrolls it, and captureVisibleTab rendering the current viewport.
+// `interfere(requestedY, attempt)` returns how far the page gets scrolled between
+// PagePixel's scroll and the screenshot (a mouse wheel, a page script...).
+function fakeTab({ height = 3000, viewport = 700, width = 40, interfere = () => 0 }) {
+  const color = (y) => [y & 255, (y >> 8) & 255, 77];
+  let scrollY = 0;
+  let lastRequested = 0;
+  const attempts = {};
+  const clamp = (y) => Math.max(0, Math.min(y, height - viewport));
+  globalThis.chrome = {
+    tabs: {
+      async sendMessage(_tabId, msg) {
+        if (msg.type === 'PP_MEASURE') return { scrollHeight: height, viewportHeight: viewport, viewportWidth: width, scrollbarWidth: 0, devicePixelRatio: 1, initialScrollY: 0 };
+        if (msg.type === 'PP_SCROLL_TO') {
+          lastRequested = msg.y;
+          scrollY = clamp(msg.y);
+          return { scrollY };
+        }
+        if (msg.type === 'PP_GET_SCROLL') return { scrollY };
+        return { ok: true };
+      },
+      async captureVisibleTab() {
+        const n = (attempts[lastRequested] = (attempts[lastRequested] || 0) + 1);
+        scrollY = clamp(scrollY + interfere(lastRequested, n));
+        const c = document.createElement('canvas');
+        c.width = width;
+        c.height = viewport;
+        const x = c.getContext('2d');
+        for (let r = 0; r < viewport; r++) {
+          x.fillStyle = `rgb(${color(scrollY + r).join(',')})`;
+          x.fillRect(0, r, width, 1);
+        }
+        return c.toDataURL('image/png');
+      },
+    },
+  };
+  return { tab: { id: 1, windowId: 1 }, color, height };
+}
+
+async function misplacedRows(blob, height, color) {
+  const bitmap = await createImageBitmap(blob);
+  const px = await decodePixels(blob, bitmap.width, bitmap.height);
+  let bad = 0;
+  for (let y = 0; y < height; y++) {
+    const i = y * bitmap.width * 4;
+    const [r, g, b] = color(y);
+    if (px[i] !== r || px[i + 1] !== g || px[i + 2] !== b) bad++;
+  }
+  return { bad, height: bitmap.height };
+}
+
+test('fullpage: a slice the page scrolled away from is recaptured, not misplaced', async () => {
+  // Reproduces the real capture: the page moved +333 px during one slice's screenshot.
+  const { tab, color, height } = fakeTab({ interfere: (y, attempt) => (y === 1400 && attempt === 1 ? 333 : 0) });
+  const blob = await captureFullPage(tab, { delayMs: 0 });
+  const { bad, height: h } = await misplacedRows(blob, height, color);
+  eq(h, height, 'stitched height');
+  eq(bad, 0, 'rows showing the wrong part of the page:');
+});
+
+test('fullpage: a page that keeps moving is placed where it actually was', async () => {
+  // Interferes on every attempt: after the retries, placement must follow the real position.
+  const { tab, color, height } = fakeTab({ interfere: (y) => (y === 700 ? 50 : 0) });
+  const blob = await captureFullPage(tab, { delayMs: 0 });
+  const bitmap = await createImageBitmap(blob);
+  const px = await decodePixels(blob, bitmap.width, bitmap.height);
+  let wrong = 0;
+  for (let y = 0; y < height; y++) {
+    const i = y * bitmap.width * 4;
+    if (px[i + 3] === 0) continue; // an uncapturable gap is allowed, duplicated content is not
+    const [r, g, b] = color(y);
+    if (px[i] !== r || px[i + 1] !== g || px[i + 2] !== b) wrong++;
+  }
+  eq(wrong, 0, 'rows showing the wrong part of the page:');
+});
+
+test('fullpage: capture neutralises smooth scrolling and scroll-snap, then restores them', async () => {
+  const frame = document.createElement('iframe');
+  frame.style.cssText = 'width:400px;height:300px;border:0';
+  frame.srcdoc = `<!doctype html><style>html{scroll-behavior:smooth;scroll-snap-type:y mandatory}
+    section{height:500px;scroll-snap-align:start}</style><body style="margin:0">
+    <section>1</section><section>2</section><section>3</section><section>4</section><section>5</section></body>`;
+  document.body.append(frame);
+  await new Promise((r) => (frame.onload = r));
+  const win = frame.contentWindow;
+  let listener;
+  win.chrome = { runtime: { onMessage: { addListener: (fn) => (listener = fn) }, sendMessage() {} } };
+  const script = win.document.createElement('script');
+  script.src = '/extension/content/content-script.js';
+  await new Promise((r) => ((script.onload = r), win.document.head.append(script)));
+  const send = (msg) => new Promise((resolve) => { if (listener(msg, null, resolve) !== true) {} });
+  await send({ type: 'PP_PREPARE_FULLPAGE' });
+  const { scrollY } = await send({ type: 'PP_SCROLL_TO', y: 730 });
+  const html = win.getComputedStyle(win.document.documentElement);
+  const during = { behavior: html.scrollBehavior, snap: html.scrollSnapType };
+  await send({ type: 'PP_RESTORE_FULLPAGE', scrollY: 0 });
+  const after = { behavior: html.scrollBehavior, snap: html.scrollSnapType };
+  frame.remove();
+  eq(scrollY, 730, 'landed at');
+  eq(during.behavior, 'auto');
+  eq(during.snap, 'none');
+  eq(after.behavior, 'smooth');
+  assert(after.snap.startsWith('y'), `snap restored: ${after.snap}`);
 });

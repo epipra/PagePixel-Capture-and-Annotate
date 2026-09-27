@@ -26,6 +26,25 @@ async function captureVisibleTabWithRetry(windowId, attempts = 4) {
   }
 }
 
+const MAX_SLICE_ATTEMPTS = 3;
+
+// The page can move between our scroll and the screenshot (a mouse wheel while the popup is
+// open, page scripts), so the scroll position is read again after capturing. If it changed,
+// the slice is recaptured; a slice is always placed where the page actually was, so a page
+// that keeps moving can leave a gap but never duplicated or misplaced content.
+async function captureSlice(tabId, windowId, y, delayMs) {
+  let slice;
+  for (let attempt = 1; attempt <= MAX_SLICE_ATTEMPTS; attempt++) {
+    const { scrollY: before } = await sendToTab(tabId, { type: 'PP_SCROLL_TO', y });
+    await wait(delayMs);
+    const dataUrl = await captureVisibleTabWithRetry(windowId);
+    const after = (await sendToTab(tabId, { type: 'PP_GET_SCROLL' }))?.scrollY ?? before;
+    slice = { y: after, dataUrl };
+    if (after === before) break;
+  }
+  return slice;
+}
+
 export function dataUrlToBlob(dataUrl) {
   const [header, base64] = dataUrl.split(',');
   const mime = (header.match(/data:(.*?);base64/) || [])[1] || 'image/png';
@@ -65,11 +84,7 @@ export async function captureFullPage(tab, options = {}, onProgress = () => {}) 
   const slices = [];
   try {
     for (let i = 0; i < order.length; i++) {
-      const pos = order[i];
-      await sendToTab(tabId, { type: 'PP_SCROLL_TO', y: pos });
-      await wait(delayMs);
-      const dataUrl = await captureVisibleTabWithRetry(windowId);
-      slices.push({ y: pos, dataUrl });
+      slices.push(await captureSlice(tabId, windowId, order[i], delayMs));
       onProgress({ phase: 'capture', current: i + 1, total: order.length });
     }
   } finally {

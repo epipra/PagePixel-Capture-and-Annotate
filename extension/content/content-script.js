@@ -6,6 +6,12 @@
   window.__pagePixelContentScriptLoaded = true;
 
   let hiddenFixedEls = [];
+  let savedScrollStyles = [];
+
+  // Page CSS that can make the scroll position drift from what PagePixel asked for:
+  // smooth scrolling animates past the capture, snap points pull it to a section edge,
+  // and scroll anchoring shifts it when lazy content above the viewport loads.
+  const SCROLL_OVERRIDES = { 'scroll-behavior': 'auto', 'scroll-snap-type': 'none', 'overflow-anchor': 'none' };
 
   function measure() {
     return {
@@ -37,12 +43,24 @@
         el.style.setProperty('visibility', 'hidden', 'important');
       }
     }
+    savedScrollStyles = [document.documentElement, document.body].filter(Boolean).map((el) => {
+      const prev = {};
+      for (const [prop, value] of Object.entries(SCROLL_OVERRIDES)) {
+        prev[prop] = [el.style.getPropertyValue(prop), el.style.getPropertyPriority(prop)];
+        el.style.setProperty(prop, value, 'important');
+      }
+      return { el, prev };
+    });
     return { hiddenCount: hiddenFixedEls.length };
   }
 
   async function scrollTo(y) {
-    window.scrollTo(0, y);
-    await waitForScrollSettle();
+    const maxY = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+    for (let attempt = 0; attempt < 3; attempt++) {
+      window.scrollTo({ top: y, left: 0, behavior: 'instant' });
+      await waitForScrollSettle();
+      if (Math.abs(window.scrollY - Math.min(y, maxY)) <= 1) break;
+    }
     return { scrollY: window.scrollY };
   }
 
@@ -52,7 +70,15 @@
       else el.style.removeProperty('visibility');
     }
     hiddenFixedEls = [];
-    window.scrollTo(0, typeof scrollY === 'number' ? scrollY : 0);
+    // Return to the user's position before smooth scrolling comes back, so it doesn't animate.
+    window.scrollTo({ top: typeof scrollY === 'number' ? scrollY : 0, left: 0, behavior: 'instant' });
+    for (const { el, prev } of savedScrollStyles) {
+      for (const [prop, [value, priority]] of Object.entries(prev)) {
+        if (value) el.style.setProperty(prop, value, priority);
+        else el.style.removeProperty(prop);
+      }
+    }
+    savedScrollStyles = [];
     return { ok: true };
   }
 
@@ -173,6 +199,9 @@
       case 'PP_SCROLL_TO':
         scrollTo(message.y).then(sendResponse);
         return true;
+      case 'PP_GET_SCROLL':
+        sendResponse({ scrollY: window.scrollY });
+        return false;
       case 'PP_RESTORE_FULLPAGE':
         sendResponse(restoreFullPage(message.scrollY));
         return false;

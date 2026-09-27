@@ -14,7 +14,7 @@
   - After the security review: xref offsets, startxref, references and JPEG SOI/EOI inside PDFs are checked (a Catalog hidden in image bytes and targeted by the xref is rejected); PNG trailing data, unknown chunks and a non-IHDR first chunk, JPEG without EOI or with trailing data, and a mismatched WEBP RIFF size → 415; a 3 MB PDF tail is rejected without throwing; IPv6 is rate-limited per /64.
   - Mutation checks confirmed the tests fail when the rate-limit, PDF-name, xref-offset or PNG-IEND check is removed.
   - Re-run against `wrangler dev` after hardening: 8 real PagePixel outputs (full-page PNG and multi-page PDF, transparent PNG, JPEG, WEBP, lossless WEBP, full-image and A4 PDFs) are all accepted.
-- **Extension library — 28 in-browser tests** in real Chrome 154 (`tests/extension/index.html`):
+- **Extension library — 31 in-browser tests** in real Chrome 154 (`tests/extension/index.html`):
   - The optimized PNG is pixel-identical to Chrome's PNG (opaque, transparent, 1×1 and odd sizes) and smaller.
   - `encodeCanvas` MIME types are correct for all 4 formats, and lower quality gives smaller files.
   - Quality ladder: 0.92 when it fits, then 0.85, then the 0.80 floor for PDF. Oversize PNG → measured WEBP fallback; none if even WEBP 0.80 doesn't fit; WEBP never offers itself.
@@ -51,6 +51,7 @@
 
 - Uploads from the installed extension (PNG 2.59 MB optimized lossless, JPEG/WEBP ≈39 dB PSNR vs the PNG, single-page PDF) all served correctly from img.omwly.com.
 - **Fixed:** Full Page captures included the page's scrollbar, with its thumb at a different position in each stitched slice (a v1.0.0 bug). The content script now reports `scrollbarWidth` and `stitchSlices` trims `scrollbarWidth × devicePixelRatio` from the right edge. 3 new tests cover it; a mutation check confirms the stitching test fails without the fix.
+- **Fixed:** a Full Page capture of dtt360.com/search-arbitrage-media-buyer-jobs had two slices placed at the wrong height (content from +333 px and +2360 px further down, so the FAQ section appeared twice). A fresh load couldn't reproduce it (every scroll landed exactly and the height stayed 11,051 px), so the page moved between PagePixel's scroll and the screenshot (wheel/trackpad while the popup was open, or page script). Now: the content script neutralises `scroll-behavior`, `scroll-snap-type` and `overflow-anchor` during capture (restored afterwards) and re-scrolls until it lands. After each screenshot the stitcher re-reads the scroll position (`PP_GET_SCROLL`), recaptures a slice that moved (up to 3 tries) and places every slice at its actual position. 3 new tests (a fake tab reproducing the +333 px drift, a page that keeps moving, and a smooth+snap fixture) all failed before the fix and pass after.
 
 ### Manual checks for v1.1.0 (need the installed extension — Load unpacked `extension/`)
 
@@ -62,7 +63,8 @@
 - [ ] Offline (DevTools → Network → Offline on the result tab) → "Couldn't reach img.omwly.com…".
 - [ ] 11 uploads within a minute → "Too many uploads…".
 - [ ] The service worker console shows no errors during capture.
-- [ ] Full Page capture on a page with a classic scrollbar → no scrollbar strip at the right edge of the result.
+- [ ] Full Page capture on a page with a classic scrollbar → no scrollbar strip at the right edge of the result. (Verified 2026-09-28: 2545 px wide, clean edge.)
+- [ ] Full Page capture of dtt360.com/search-arbitrage-media-buyer-jobs → no repeated or missing sections.
 
 ## Methodology
 

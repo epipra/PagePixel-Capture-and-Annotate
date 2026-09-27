@@ -1,10 +1,10 @@
 import { getCapture, deleteCapture } from '../lib/idb-store.js';
-import { buildPdfFromCanvas, PAGE_SIZES } from '../lib/pdf-writer.js';
+import { PAGE_SIZES } from '../lib/pdf-writer.js';
+import { encodeCanvas, FORMAT_INFO } from '../lib/encode.js';
+import { prepareUpload, formatMB, MAX_UPLOAD_BYTES } from '../lib/compress.js';
+import { uploadBlob, UploadError } from '../lib/upload-client.js';
 
-// Placeholder until this extension has a real Chrome Web Store listing —
-// update after publishing (guide §7). Used by the Feedback button and the
-// star-rating widget, both of which just deep-link out to the store listing.
-const STORE_LISTING_URL = 'https://chromewebstore.google.com/detail/REPLACE_WITH_EXTENSION_ID';
+const STORE_LISTING_URL = 'https://chromewebstore.google.com/detail/epcfhbbgdknmhomfimblbokfejlgdgne';
 
 const MAX_HISTORY = 25;
 
@@ -17,6 +17,11 @@ const els = {
   pdfPageSizeSelect: document.getElementById('pdfPageSizeSelect'),
   copyBtn: document.getElementById('copyBtn'),
   downloadBtn: document.getElementById('downloadBtn'),
+  uploadBtn: document.getElementById('uploadBtn'),
+  oversizeDialog: document.getElementById('oversizeDialog'),
+  oversizeText: document.getElementById('oversizeText'),
+  oversizeWebpBtn: document.getElementById('oversizeWebpBtn'),
+  oversizeCancelBtn: document.getElementById('oversizeCancelBtn'),
   helpBtn: document.getElementById('helpBtn'),
   feedbackBtn: document.getElementById('feedbackBtn'),
   ratingWidget: document.getElementById('ratingWidget'),
@@ -56,6 +61,7 @@ const state = {
   dragStart: null,
   pendingCrop: null,
   toastTimer: null,
+  busy: false,
 };
 
 init();
@@ -64,6 +70,7 @@ async function init() {
   populatePdfPageSizes();
   bindToolbar();
   bindEditor();
+  syncCopyAvailability();
 
   const params = new URLSearchParams(location.search);
   state.captureId = params.get('captureId');
@@ -124,10 +131,12 @@ function bindToolbar() {
 
   els.formatSelect.addEventListener('change', () => {
     els.pdfPageSizeSelect.hidden = els.formatSelect.value !== 'pdf';
+    syncCopyAvailability();
   });
 
   els.copyBtn.addEventListener('click', copyToClipboard);
   els.downloadBtn.addEventListener('click', downloadExport);
+  els.uploadBtn.addEventListener('click', uploadExport);
 
   els.helpBtn.addEventListener('click', () => {
     chrome.tabs.create({ url: chrome.runtime.getURL('help/help.html') });
@@ -166,17 +175,30 @@ function fitZoomToViewport() {
   }
 }
 
-function showToast(message) {
+function showToast(message, durationMs = 2200) {
   els.toast.textContent = message;
   els.toast.hidden = false;
   clearTimeout(state.toastTimer);
-  state.toastTimer = setTimeout(() => (els.toast.hidden = true), 2200);
+  state.toastTimer = setTimeout(() => (els.toast.hidden = true), durationMs);
 }
 
 // ----------------------------------------------------------------- export --
 
 function canvasToBlob(canvas, type, quality) {
   return new Promise((resolve) => canvas.toBlob(resolve, type, quality));
+}
+
+function syncCopyAvailability() {
+  const isPdf = els.formatSelect.value === 'pdf';
+  els.copyBtn.disabled = state.busy || isPdf;
+  els.copyBtn.title = isPdf ? "PDF can't be copied — use Download or Upload" : 'Copy image to clipboard';
+}
+
+function setBusy(busy, uploadLabel = '☁ Upload') {
+  state.busy = busy;
+  for (const el of [els.downloadBtn, els.uploadBtn, els.formatSelect, els.pdfPageSizeSelect]) el.disabled = busy;
+  els.uploadBtn.textContent = uploadLabel;
+  syncCopyAvailability();
 }
 
 function buildFilename(ext) {
@@ -198,35 +220,97 @@ function triggerDownload(blob, filename) {
   });
 }
 
+// Chrome's async clipboard only accepts image/png, so JPEG/WEBP are encoded first (to carry
+// that format's quality) and then re-wrapped as PNG. The blob is passed as a promise so the
+// write starts inside the click's user activation.
 async function copyToClipboard() {
+  const format = els.formatSelect.value;
+  if (format === 'pdf') return;
+  const pngPromise = format === 'png' ? canvasToBlob(els.canvas, 'image/png') : encodeCanvas(els.canvas, format).then(blobToPng);
   try {
-    const blob = await canvasToBlob(els.canvas, 'image/png');
-    await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
-    showToast('Copied to clipboard');
+    await navigator.clipboard.write([new ClipboardItem({ 'image/png': pngPromise })]);
+    showToast(format === 'png' ? 'Copied to clipboard' : `Copied (${FORMAT_INFO[format].label} quality, pasted as PNG)`);
   } catch (err) {
     console.error('[PagePixel]', err);
     showToast('Copy failed — try again');
   }
 }
 
+async function blobToPng(blob) {
+  const bitmap = await createImageBitmap(blob);
+  const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
+  canvas.getContext('2d').drawImage(bitmap, 0, 0);
+  bitmap.close();
+  return canvas.convertToBlob({ type: 'image/png' });
+}
+
 async function downloadExport() {
   const format = els.formatSelect.value;
+  setBusy(true);
   try {
-    if (format === 'pdf') {
-      const pageSizeKey = els.pdfPageSizeSelect.value;
-      const bytes = await buildPdfFromCanvas(els.canvas, pageSizeKey);
-      triggerDownload(new Blob([bytes], { type: 'application/pdf' }), buildFilename('pdf'));
-    } else {
-      const mime = format === 'jpeg' ? 'image/jpeg' : format === 'webp' ? 'image/webp' : 'image/png';
-      const quality = format === 'png' ? undefined : 0.92;
-      const blob = await canvasToBlob(els.canvas, mime, quality);
-      triggerDownload(blob, buildFilename(format));
-    }
+    const blob = await encodeCanvas(els.canvas, format, { pdfPageSize: els.pdfPageSizeSelect.value });
+    triggerDownload(blob, buildFilename(format));
     showToast('Download started');
   } catch (err) {
     console.error('[PagePixel]', err);
     showToast('Export failed — try again');
+  } finally {
+    setBusy(false);
   }
+}
+
+async function uploadExport() {
+  const format = els.formatSelect.value;
+  setBusy(true, 'Optimizing…');
+  try {
+    const plan = await prepareUpload(els.canvas, format, { pdfPageSize: els.pdfPageSizeSelect.value });
+    let upload = plan;
+    if (!plan.ok) {
+      upload = await chooseOversizeFallback(plan);
+      if (!upload) return;
+    }
+
+    setBusy(true, 'Uploading…');
+    const { url } = await uploadBlob(upload.blob);
+    const params = new URLSearchParams({ url, fmt: upload.format, size: String(upload.blob.size) });
+    await chrome.tabs.create({ url: chrome.runtime.getURL(`share/share.html?${params}`) });
+    showToast(upload.note || 'Uploaded', 4000);
+  } catch (err) {
+    console.error('[PagePixel]', err);
+    showToast(err instanceof UploadError ? err.message : 'Upload failed — please try again.', 4000);
+  } finally {
+    setBusy(false);
+  }
+}
+
+// Resolves with the WEBP fallback plan if the user accepts it, or null.
+function chooseOversizeFallback(plan) {
+  const label = FORMAT_INFO[plan.format].label;
+  const how = plan.format === 'png' ? 'even after lossless optimization' : 'even at 80% quality';
+  const limit = formatMB(MAX_UPLOAD_BYTES);
+  if (!plan.fallback) {
+    showToast(`This ${label} is ${formatMB(plan.size)} ${how} (limit ${limit}). Too large to upload — use Download instead.`, 6000);
+    return Promise.resolve(null);
+  }
+
+  const { blob, quality } = plan.fallback;
+  els.oversizeText.textContent = `This ${label} is ${formatMB(plan.size)} ${how} (limit ${limit}).`;
+  els.oversizeWebpBtn.textContent = `Upload as WEBP (~${formatMB(blob.size)})`;
+  els.oversizeDialog.showModal();
+  return new Promise((resolve) => {
+    const finish = (accepted) => {
+      els.oversizeWebpBtn.removeEventListener('click', onAccept);
+      els.oversizeCancelBtn.removeEventListener('click', onCancel);
+      els.oversizeDialog.removeEventListener('close', onCancel);
+      if (els.oversizeDialog.open) els.oversizeDialog.close();
+      resolve(accepted ? { blob, format: 'webp', note: `Uploaded as WEBP (${Math.round(quality * 100)}%) to fit ${limit}` } : null);
+    };
+    const onAccept = () => finish(true);
+    const onCancel = () => finish(false);
+    els.oversizeWebpBtn.addEventListener('click', onAccept);
+    els.oversizeCancelBtn.addEventListener('click', onCancel);
+    els.oversizeDialog.addEventListener('close', onCancel);
+  });
 }
 
 // ----------------------------------------------------------------- editor --

@@ -33,6 +33,7 @@
       <select id="pdfPageSizeSelect" class="pp-select" title="PDF page size" aria-label="PDF page size" hidden></select>
       <button id="copyBtn" class="pp-btn" title="Copy image to clipboard">Copy</button>
       <button id="downloadBtn" class="pp-btn pp-btn--primary" title="Download">Download</button>
+      <button id="uploadBtn" class="pp-btn pp-btn--upload" title="Upload to img.omwly.com and get a public link">☁ Upload</button>
     </div>
 
     <div class="pp-toolbar__group">
@@ -91,6 +92,14 @@
     </div>
     <p id="emptyState" class="pp-empty-state" hidden>Couldn't load this capture. Try capturing again from the toolbar popup.</p>
   </main>
+
+  <dialog id="oversizeDialog" class="pp-dialog" aria-labelledby="oversizeText">
+    <p id="oversizeText"></p>
+    <div class="pp-dialog__actions">
+      <button type="button" id="oversizeCancelBtn" class="pp-btn">Cancel</button>
+      <button type="button" id="oversizeWebpBtn" class="pp-btn pp-btn--primary"></button>
+    </div>
+  </dialog>
 
   <div id="toast" class="pp-toast" role="status" aria-live="polite" hidden></div>
 

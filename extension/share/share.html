@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>PagePixel — Shared link</title>
+<link rel="icon" href="../icons/icon32.png" />
+<link rel="stylesheet" href="../styles/theme.css" />
+<link rel="stylesheet" href="share.css" />
+</head>
+<body>
+  <header class="pp-share-header">
+    <img src="../icons/icon32.png" alt="" width="22" height="22" />
+    <span>PagePixel</span>
+  </header>
+
+  <main class="pp-share-main">
+    <section class="pp-share-card" id="shareCard" hidden>
+      <h1 class="pp-share-title"><span aria-hidden="true">✓</span> Uploaded</h1>
+
+      <a class="pp-share-preview" id="previewLink" target="_blank" rel="noopener noreferrer">
+        <img id="previewImg" alt="Uploaded screenshot" hidden />
+        <span class="pp-share-pdf" id="previewPdf" hidden>
+          <span class="pp-share-pdf__icon" aria-hidden="true">PDF</span>
+          <span>PDF document — open to view</span>
+        </span>
+      </a>
+
+      <div class="pp-share-link">
+        <label class="visually-hidden" for="urlField">Public link</label>
+        <input id="urlField" type="text" readonly spellcheck="false" />
+        <button type="button" id="copyLinkBtn" class="pp-btn pp-btn--primary">Copy link</button>
+      </div>
+
+      <div class="pp-share-meta">
+        <a id="openLink" class="pp-btn" target="_blank" rel="noopener noreferrer">Open image</a>
+        <span id="fileInfo"></span>
+      </div>
+
+      <p class="pp-share-note">Anyone with this link can view it. Links are permanent.</p>
+    </section>
+
+    <p class="pp-share-error" id="shareError" hidden>This isn't a valid PagePixel link. Upload the screenshot again from the result tab.</p>
+  </main>
+
+  <footer class="pp-footer">
+    <a href="../privacy/privacy.html">Privacy Policy</a>
+    <span class="pp-dot">·</span>
+    <span>Developed by AdxFuel</span>
+  </footer>
+
+  <script type="module" src="share.js"></script>
+</body>
+</html>

@@ -72,6 +72,47 @@ body {
   border-color: var(--pp-coral-600);
 }
 
+.pp-toolbar .pp-btn--upload {
+  background: var(--pp-teal-500);
+  border-color: var(--pp-teal-300);
+}
+
+.pp-toolbar .pp-btn--upload:hover {
+  background: var(--pp-teal-700);
+  border-color: var(--pp-teal-300);
+}
+
+.pp-toolbar .pp-btn:disabled,
+.pp-toolbar .pp-select:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.pp-dialog {
+  border: 1px solid var(--pp-border);
+  border-radius: var(--pp-radius-md);
+  box-shadow: var(--pp-shadow-md);
+  padding: 20px 22px 16px;
+  max-width: 420px;
+  color: var(--pp-ink);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.pp-dialog::backdrop {
+  background: rgba(11, 31, 51, 0.45);
+}
+
+.pp-dialog p {
+  margin: 0 0 16px;
+}
+
+.pp-dialog__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
 .pp-zoom {
   display: flex;
   align-items: center;

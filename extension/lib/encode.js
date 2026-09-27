@@ -141,7 +141,7 @@ export async function encodePngOptimized(canvas) {
 
     if (batchRows === rowsPerBatch || y === height - 1) {
       await writer.ready;
-      writer.write(batch.subarray(0, batchRows * rowBytes));
+      await writer.write(batch.subarray(0, batchRows * rowBytes));
       batch = new Uint8Array(rowsPerBatch * rowBytes);
       batchRows = 0;
     }
